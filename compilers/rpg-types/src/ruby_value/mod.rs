@@ -1,8 +1,4 @@
-use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-    hash::{Hash, Hasher},
-};
+use std::hash::{Hash, Hasher};
 
 mod de;
 mod ser;
@@ -118,10 +114,10 @@ pub enum RpgValue {
 }
 
 /// RpgValue 的哈希表类型
-pub type RpgHash = HashMap<RpgHashKey, RpgValue>;
+pub type RpgHash = std::collections::HashMap<RpgHashKey, RpgValue>;
 
 /// RpgValue 的字段映射类型
-pub type RpgFields = HashMap<String, RpgValue>;
+pub type RpgFields = std::collections::HashMap<String, RpgValue>;
 
 /// 可用作哈希键的 RpgValue 包装类型
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -185,7 +181,7 @@ impl Hash for RpgValue {
             }
             RpgValue::Object { class, fields } => {
                 class.hash(state);
-                fields.hash(state);
+                hash_fields(fields, state);
             }
             RpgValue::Userdata { class, data } => {
                 class.hash(state);
@@ -193,7 +189,7 @@ impl Hash for RpgValue {
             }
             RpgValue::Instance { value, fields } => {
                 value.hash(state);
-                fields.hash(state);
+                hash_fields(fields, state);
             }
             RpgValue::Regex { pattern, flags } => {
                 pattern.hash(state);
@@ -201,7 +197,7 @@ impl Hash for RpgValue {
             }
             RpgValue::Struct { class, fields } => {
                 class.hash(state);
-                fields.hash(state);
+                hash_fields(fields, state);
             }
             RpgValue::Class(c) => c.hash(state),
             RpgValue::Module(m) => m.hash(state),
@@ -222,6 +218,15 @@ impl Hash for RpgValue {
                 value.hash(state);
             }
         }
+    }
+}
+
+fn hash_fields<H: Hasher>(fields: &RpgFields, state: &mut H) {
+    let mut entries: Vec<_> = fields.iter().collect();
+    entries.sort_by_key(|(k, _)| *k);
+    for (k, v) in entries {
+        k.hash(state);
+        v.hash(state);
     }
 }
 
@@ -320,5 +325,30 @@ impl RpgValue {
     /// 检查是否为对象
     pub fn is_object(&self) -> bool {
         matches!(self, RpgValue::Object { .. })
+    }
+
+    /// 将 RpgValue 转换为字符串表示
+    pub fn to_string_lossy(&self) -> String {
+        match self {
+            RpgValue::Nil => "nil".to_string(),
+            RpgValue::Bool(b) => b.to_string(),
+            RpgValue::Integer(i) => i.to_string(),
+            RpgValue::Float(f) => f.to_string(),
+            RpgValue::String(s) => String::from_utf8_lossy(s).to_string(),
+            RpgValue::Symbol(s) => s.clone(),
+            RpgValue::Array(_) => "[...]".to_string(),
+            RpgValue::Hash(_) => "{...}".to_string(),
+            RpgValue::Object { class, .. } => format!("<Object: {}>", class),
+            RpgValue::Userdata { class, .. } => format!("<Userdata: {}>", class),
+            RpgValue::Instance { .. } => "<Instance>".to_string(),
+            RpgValue::Regex { pattern, .. } => String::from_utf8_lossy(pattern).to_string(),
+            RpgValue::Struct { class, .. } => format!("<Struct: {}>", class),
+            RpgValue::Class(c) => c.clone(),
+            RpgValue::Module(m) => m.clone(),
+            RpgValue::Extended { module, .. } => format!("<Extended: {}>", module),
+            RpgValue::UserClass { class, .. } => format!("<UserClass: {}>", class),
+            RpgValue::UserMarshal { class, .. } => format!("<UserMarshal: {}>", class),
+            RpgValue::Data { class, .. } => format!("<Data: {}>", class),
+        }
     }
 }

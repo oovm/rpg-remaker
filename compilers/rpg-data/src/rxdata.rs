@@ -1,4 +1,4 @@
-use crate::ruby_value::value_to_rpg;
+use crate::ruby_value::{rpg_to_value, value_to_rpg};
 use alox_48::{Value, from_bytes, to_bytes};
 use flate2::read::GzDecoder;
 use rpg_types::{Result, RpgError, RpgValue};
@@ -9,7 +9,7 @@ const GZIP_MAGIC: [u8; 2] = [0x1F, 0x8B];
 
 /// 检测数据是否为 gzip 压缩
 fn is_gzip_compressed(data: &[u8]) -> bool {
-    data.len() >= 2 && data[0..2] == GZIP_MAGIC
+    data.starts_with(&GZIP_MAGIC[..])
 }
 
 /// 解压 gzip 数据
@@ -41,7 +41,7 @@ pub fn read_rxdata(file_path: &str) -> Result<RpgValue> {
 
 /// 写入 rxdata 文件
 pub fn write_rxdata(file_path: &str, value: &RpgValue) -> Result<()> {
-    let alox_value = Value::from(value);
+    let alox_value = rpg_to_value(value);
     let mut file = std::fs::File::create(file_path)?;
     let data = to_bytes(&alox_value).map_err(|e| RpgError::encode("rxdata", &e.to_string()))?;
     file.write_all(&data)?;

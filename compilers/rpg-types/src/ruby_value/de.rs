@@ -106,12 +106,124 @@ impl<'de> Visitor<'de> for RpgValueVisitor {
     where
         A: MapAccess<'de>,
     {
-        use super::RpgHash;
-        let mut fields = RpgHash::with_capacity(map.size_hint().unwrap_or(0));
+        let mut raw_map: HashMap<String, RpgValue> = HashMap::with_capacity(map.size_hint().unwrap_or(0));
         while let Some((key, value)) = map.next_entry()? {
-            fields.insert(super::RpgHashKey(key), value);
+            raw_map.insert(key, value);
         }
-        Ok(RpgValue::Hash(fields))
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__symbol__") {
+            if let Some(RpgValue::String(s)) = raw_map.get("value") {
+                return Ok(RpgValue::Symbol(String::from_utf8_lossy(s).to_string()));
+            }
+        }
+
+        if let Some(RpgValue::String(class)) = raw_map.remove("__class__") {
+            let class_str = String::from_utf8_lossy(&class).to_string();
+            let fields: RpgFields = raw_map.into_iter().map(|(k, v)| (k, v)).collect();
+            return Ok(RpgValue::Object { class: class_str, fields });
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__userdata__") {
+            let class = extract_string(raw_map.get("class"));
+            let data = extract_bytes(raw_map.get("data"));
+            return Ok(RpgValue::Userdata { class, data });
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__instance__") {
+            let value = raw_map.get("value").cloned().unwrap_or(RpgValue::Nil);
+            let fields = extract_fields_from_hash(raw_map.get("fields"));
+            return Ok(RpgValue::Instance { value: Box::new(value), fields });
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__regex__") {
+            let pattern = extract_bytes(raw_map.get("pattern"));
+            let flags = extract_u8(raw_map.get("flags"));
+            return Ok(RpgValue::Regex { pattern, flags });
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__struct__") {
+            let class = extract_string(raw_map.get("class"));
+            let mut fields = RpgFields::new();
+            for (k, v) in raw_map {
+                if k != "__struct__" && k != "class" {
+                    fields.insert(k, v);
+                }
+            }
+            return Ok(RpgValue::Struct { class, fields });
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__class_ref__") {
+            let name = extract_string(raw_map.get("name"));
+            return Ok(RpgValue::Class(name));
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__module__") {
+            let name = extract_string(raw_map.get("name"));
+            return Ok(RpgValue::Module(name));
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__extended__") {
+            let module = extract_string(raw_map.get("module"));
+            let value = raw_map.get("value").cloned().unwrap_or(RpgValue::Nil);
+            return Ok(RpgValue::Extended { module, value: Box::new(value) });
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__user_class__") {
+            let class = extract_string(raw_map.get("class"));
+            let value = raw_map.get("value").cloned().unwrap_or(RpgValue::Nil);
+            return Ok(RpgValue::UserClass { class, value: Box::new(value) });
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__user_marshal__") {
+            let class = extract_string(raw_map.get("class"));
+            let value = raw_map.get("value").cloned().unwrap_or(RpgValue::Nil);
+            return Ok(RpgValue::UserMarshal { class, value: Box::new(value) });
+        }
+
+        if let Some(RpgValue::Bool(true)) = raw_map.get("__data__") {
+            let class = extract_string(raw_map.get("class"));
+            let value = raw_map.get("value").cloned().unwrap_or(RpgValue::Nil);
+            return Ok(RpgValue::Data { class, value: Box::new(value) });
+        }
+
+        let hash: RpgHash = raw_map.into_iter().map(|(k, v)| (RpgHashKey(RpgValue::String(k.into_bytes())), v)).collect();
+        Ok(RpgValue::Hash(hash))
+    }
+}
+
+fn extract_string(value: Option<&RpgValue>) -> String {
+    match value {
+        Some(RpgValue::String(s)) => String::from_utf8_lossy(s).to_string(),
+        Some(RpgValue::Symbol(s)) => s.clone(),
+        _ => String::new(),
+    }
+}
+
+fn extract_bytes(value: Option<&RpgValue>) -> Vec<u8> {
+    match value {
+        Some(RpgValue::String(s)) => s.clone(),
+        _ => Vec::new(),
+    }
+}
+
+fn extract_u8(value: Option<&RpgValue>) -> u8 {
+    match value {
+        Some(RpgValue::Integer(i)) => *i as u8,
+        _ => 0,
+    }
+}
+
+fn extract_fields_from_hash(value: Option<&RpgValue>) -> RpgFields {
+    match value {
+        Some(RpgValue::Hash(h)) => h
+            .iter()
+            .filter_map(|(k, v)| match &k.0 {
+                RpgValue::String(s) => Some((String::from_utf8_lossy(s).to_string(), v.clone())),
+                RpgValue::Symbol(s) => Some((s.clone(), v.clone())),
+                _ => None,
+            })
+            .collect(),
+        _ => RpgFields::new(),
     }
 }
 

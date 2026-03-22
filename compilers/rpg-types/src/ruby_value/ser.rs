@@ -1,6 +1,6 @@
 use serde::ser::{Serialize, SerializeMap, SerializeSeq, Serializer};
 
-use super::{RpgFields, RpgHash, RpgHashKey, RpgValue};
+use super::{RpgFields, RpgHashKey, RpgValue};
 
 impl Serialize for RpgValue {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -16,7 +16,12 @@ impl Serialize for RpgValue {
                 let lossy = String::from_utf8_lossy(s);
                 serializer.serialize_str(&lossy)
             }
-            RpgValue::Symbol(s) => serializer.serialize_newtype_struct("!symbol", &SymbolWrapper(s)),
+            RpgValue::Symbol(s) => {
+                let mut map = serializer.serialize_map(Some(2))?;
+                map.serialize_entry("__symbol__", &true)?;
+                map.serialize_entry("value", s)?;
+                map.end()
+            }
             RpgValue::Array(arr) => {
                 let mut seq = serializer.serialize_seq(Some(arr.len()))?;
                 for item in arr {
@@ -32,53 +37,81 @@ impl Serialize for RpgValue {
                 map_ser.end()
             }
             RpgValue::Object { class, fields } => {
-                serializer.serialize_newtype_struct(&format!("!{}", class), &ObjectFields(fields))
+                let mut map = serializer.serialize_map(Some(fields.len() + 1))?;
+                map.serialize_entry("__class__", class)?;
+                for (k, v) in fields {
+                    map.serialize_entry(k, v)?;
+                }
+                map.end()
             }
             RpgValue::Userdata { class, data } => {
-                let mut map = serializer.serialize_map(Some(2))?;
+                let mut map = serializer.serialize_map(Some(3))?;
+                map.serialize_entry("__userdata__", &true)?;
                 map.serialize_entry("class", class)?;
                 let lossy = String::from_utf8_lossy(data);
                 map.serialize_entry("data", &lossy.as_ref())?;
                 map.end()
             }
             RpgValue::Instance { value, fields } => {
-                let mut map = serializer.serialize_map(Some(2))?;
+                let mut map = serializer.serialize_map(Some(3))?;
+                map.serialize_entry("__instance__", &true)?;
                 map.serialize_entry("value", value)?;
                 map.serialize_entry("fields", &ObjectFields(fields))?;
                 map.end()
             }
             RpgValue::Regex { pattern, flags } => {
-                let mut map = serializer.serialize_map(Some(2))?;
+                let mut map = serializer.serialize_map(Some(3))?;
+                map.serialize_entry("__regex__", &true)?;
                 let lossy = String::from_utf8_lossy(pattern);
                 map.serialize_entry("pattern", &lossy.as_ref())?;
                 map.serialize_entry("flags", flags)?;
                 map.end()
             }
             RpgValue::Struct { class, fields } => {
-                serializer.serialize_newtype_struct(&format!("!struct:{}", class), &ObjectFields(fields))
+                let mut map = serializer.serialize_map(Some(fields.len() + 2))?;
+                map.serialize_entry("__struct__", &true)?;
+                map.serialize_entry("class", class)?;
+                for (k, v) in fields {
+                    map.serialize_entry(k, v)?;
+                }
+                map.end()
             }
-            RpgValue::Class(c) => serializer.serialize_newtype_struct("!class", c),
-            RpgValue::Module(m) => serializer.serialize_newtype_struct("!module", m),
-            RpgValue::Extended { module, value } => {
+            RpgValue::Class(c) => {
                 let mut map = serializer.serialize_map(Some(2))?;
+                map.serialize_entry("__class_ref__", &true)?;
+                map.serialize_entry("name", c)?;
+                map.end()
+            }
+            RpgValue::Module(m) => {
+                let mut map = serializer.serialize_map(Some(2))?;
+                map.serialize_entry("__module__", &true)?;
+                map.serialize_entry("name", m)?;
+                map.end()
+            }
+            RpgValue::Extended { module, value } => {
+                let mut map = serializer.serialize_map(Some(3))?;
+                map.serialize_entry("__extended__", &true)?;
                 map.serialize_entry("module", module)?;
                 map.serialize_entry("value", value)?;
                 map.end()
             }
             RpgValue::UserClass { class, value } => {
-                let mut map = serializer.serialize_map(Some(2))?;
+                let mut map = serializer.serialize_map(Some(3))?;
+                map.serialize_entry("__user_class__", &true)?;
                 map.serialize_entry("class", class)?;
                 map.serialize_entry("value", value)?;
                 map.end()
             }
             RpgValue::UserMarshal { class, value } => {
-                let mut map = serializer.serialize_map(Some(2))?;
+                let mut map = serializer.serialize_map(Some(3))?;
+                map.serialize_entry("__user_marshal__", &true)?;
                 map.serialize_entry("class", class)?;
                 map.serialize_entry("value", value)?;
                 map.end()
             }
             RpgValue::Data { class, value } => {
-                let mut map = serializer.serialize_map(Some(2))?;
+                let mut map = serializer.serialize_map(Some(3))?;
+                map.serialize_entry("__data__", &true)?;
                 map.serialize_entry("class", class)?;
                 map.serialize_entry("value", value)?;
                 map.end()
@@ -93,17 +126,6 @@ impl Serialize for RpgHashKey {
         S: Serializer,
     {
         self.0.serialize(serializer)
-    }
-}
-
-struct SymbolWrapper<'a>(&'a str);
-
-impl<'a> Serialize for SymbolWrapper<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.0)
     }
 }
 

@@ -1,5 +1,5 @@
 use clap::Parser;
-use rpg_data::{rvdata2, rxdata};
+use rpg_data::{read_rvdata2, read_rxdata};
 use std::path::Path;
 use walkdir::WalkDir;
 
@@ -52,11 +52,11 @@ fn process_file(path: &Path) {
     let result = match extension {
         Some("rvdata2") => {
             println!("处理 rvdata2 文件: {}", path.display());
-            rvdata2::read_rvdata2(path.to_str().unwrap()).map(|_| format!("成功解码 {}", path.display()))
+            read_rvdata2(path.to_str().unwrap()).map(|_| format!("成功解码 {}", path.display()))
         }
         Some("rxdata") => {
             println!("处理 rxdata 文件: {}", path.display());
-            rxdata::read_rxdata(path.to_str().unwrap()).map(|_| format!("成功解码 {}", path.display()))
+            read_rxdata(path.to_str().unwrap()).map(|_| format!("成功解码 {}", path.display()))
         }
         _ => return,
     };

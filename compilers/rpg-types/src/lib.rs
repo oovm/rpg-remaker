@@ -7,5 +7,7 @@ pub mod errors;
 /// Ruby 值模块
 pub mod ruby_value;
 
-pub use crate::errors::{Result, RpgError};
-pub use crate::ruby_value::{RpgFields, RpgHash, RpgHashKey, RpgValue};
+pub use crate::{
+    errors::{Result, RpgError},
+    ruby_value::{RpgFields, RpgHash, RpgHashKey, RpgValue},
+};

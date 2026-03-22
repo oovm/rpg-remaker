@@ -1,4 +1,4 @@
-use crate::ruby_value::value_to_rpg;
+use crate::ruby_value::{rpg_to_value, value_to_rpg};
 use alox_48::{Value, from_bytes, to_bytes};
 use flate2::read::GzDecoder;
 use rpg_types::{Result, RpgError, RpgValue};
@@ -41,7 +41,7 @@ pub fn read_rvdata2(file_path: &str) -> Result<RpgValue> {
 
 /// 写入 rvdata2 文件
 pub fn write_rvdata2(file_path: &str, value: &RpgValue) -> Result<()> {
-    let alox_value = Value::from(value);
+    let alox_value = rpg_to_value(value);
     let mut file = std::fs::File::create(file_path)?;
     let data = to_bytes(&alox_value).map_err(|e| RpgError::encode("rvdata2", &e.to_string()))?;
     file.write_all(&data)?;
