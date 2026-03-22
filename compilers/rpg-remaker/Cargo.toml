@@ -12,5 +12,4 @@ path = "bin/rpg.rs"
 [dependencies]
 clap.workspace = true
 rpg-data.workspace = true
-alox-48.workspace = true
 walkdir.workspace = true

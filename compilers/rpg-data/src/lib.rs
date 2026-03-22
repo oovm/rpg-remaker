@@ -1,6 +1,5 @@
 #![warn(missing_docs)]
 
-mod ruby_value;
 pub mod rvdata2;
 pub mod rxdata;
 

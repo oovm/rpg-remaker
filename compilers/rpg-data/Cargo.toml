@@ -6,7 +6,6 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-alox-48.workspace = true
 flate2.workspace = true
 serde.workspace = true
 serde_yaml.workspace = true

@@ -17,9 +17,9 @@ license = "AGPL-3.0-only"
 
 
 [workspace.dependencies]
-alox-48 = "0.6.0"
 clap = { version = "*", features = ["derive"] }
 flate2 = "1.0"
+indexmap = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 walkdir = "2.0"
