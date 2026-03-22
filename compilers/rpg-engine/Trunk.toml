@@ -1,0 +1,10 @@
+[build]
+target = "wasm32-unknown-unknown"
+dist = "dist"
+
+[[assets]]
+source = "index.html"
+
+[serve]
+address = "127.0.0.1"
+port = 8080

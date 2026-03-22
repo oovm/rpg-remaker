@@ -1,0 +1,58 @@
+[package]
+name = "rpg-hacker-rgss"
+version = "0.1.0"
+edition = "2021"
+description = "RGSS backend for rpg-hacker"
+
+# Default to building only the binary
+[[bin]]
+name = "rpg-hacker-rgss"
+path = "src/main.rs"
+
+# Temporarily disable library target to avoid sdl2 dependencies
+#[lib]
+#name = "rgss"
+#path = "src/lib.rs"
+
+[dependencies]
+# rpg-hacker-types = { path = "../rpg-types" }
+# rpg-hacker-rpg-config = { path = "../rpg-config" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+rand = "0.8"
+
+# Bevy game engine - conditional features based on target
+bevy = { version = "0.14", features = ["default"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies.bevy]
+version = "0.14"
+default-features = false
+features = ["webgl2"]
+
+# Image processing (keep for bitmap operations)
+image = "0.24"
+bytemuck = { version = "1.0", features = ["derive"] }
+
+# Ruby integration (mruby) - temporarily commented out for testing
+# mruby-sys = "0.3"
+
+# Utility dependencies
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.10"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+
+[profile.dev]
+opt-level = 0
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "s"
+lto = true

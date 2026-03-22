@@ -4,13 +4,10 @@
 
 /// 错误处理模块
 pub mod errors;
-/// RPG Maker 游戏数据类型模块
-pub mod rpg_maker;
 /// Ruby 值模块
 pub mod ruby_value;
 
 pub use crate::{
     errors::{Result, RpgError},
-    rpg_maker::*,
     ruby_value::{RpgFields, RpgHash, RpgHashKey, RubyValue},
 };
