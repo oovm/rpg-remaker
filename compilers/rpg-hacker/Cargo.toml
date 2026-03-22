@@ -1,17 +1,18 @@
 [package]
 name = "rpg-hacker"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 description = "RPG Maker 游戏修改器后端"
 repository = ""
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-async-trait = "0.1"
-rpg-hacker-types = { path = "../rpg-types" }
-rpg-hacker-rpg-config = { path = "../rpg-config" }
+serde.workspace = true
+async-trait.workspace = true
+rpg-types.workspace = true
+rpg-config.workspace = true
+rpg-translator.workspace = true
 
 [dev-dependencies]
-tokio = { version = "1.0", features = ["full"] }
+tokio.workspace = true

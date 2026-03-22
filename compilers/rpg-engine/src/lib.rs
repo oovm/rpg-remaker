@@ -1,3 +1,7 @@
+#![warn(missing_docs)]
+
+#![warn(missing_docs)]
+
 pub mod input;
 pub mod color;
 pub mod tone;
