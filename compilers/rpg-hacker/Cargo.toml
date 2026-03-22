@@ -11,7 +11,7 @@ repository = ""
 serde.workspace = true
 async-trait.workspace = true
 rpg-types.workspace = true
-rpg-config.workspace = true
+rpg-hacker-rpg-config.workspace = true
 rpg-translator.workspace = true
 
 [dev-dependencies]

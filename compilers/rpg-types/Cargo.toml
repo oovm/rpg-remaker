@@ -8,6 +8,6 @@ edition.workspace = true
 
 [dependencies]
 indexmap.workspace = true
-thiserror = "2.0"
+thiserror.workspace = true
 serde.workspace = true
-base64 = "0.21"
+base64.workspace = true
