@@ -1,0 +1,15 @@
+[package]
+name = "rpg-hooks"
+version = "0.1.0"
+edition = "2021"
+description = "RPG Maker 游戏修改器钩子"
+repository = ""
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
