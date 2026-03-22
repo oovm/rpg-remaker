@@ -4,4 +4,7 @@
 
 pub mod errors;
 pub mod ruby_value;
-pub use crate::errors::{Result, RpgError};
+pub use crate::{
+    errors::{Result, RpgError},
+    ruby_value::RubyValue,
+};
