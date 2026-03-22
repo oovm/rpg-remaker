@@ -1,42 +1,42 @@
 use serde::ser::{Serialize, SerializeMap, SerializeSeq, Serializer};
 
-use super::{RpgFields, RpgHashKey, RpgValue};
+use super::{RpgFields, RpgHashKey, RubyValue};
 
-impl Serialize for RpgValue {
+impl Serialize for RubyValue {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         match self {
-            RpgValue::Nil => serializer.serialize_none(),
-            RpgValue::Bool(b) => serializer.serialize_bool(*b),
-            RpgValue::Integer(i) => serializer.serialize_i32(*i),
-            RpgValue::Float(f) => serializer.serialize_f64(*f),
-            RpgValue::String(s) => {
+            RubyValue::Nil => serializer.serialize_none(),
+            RubyValue::Bool(b) => serializer.serialize_bool(*b),
+            RubyValue::Integer(i) => serializer.serialize_i32(*i),
+            RubyValue::Float(f) => serializer.serialize_f64(*f),
+            RubyValue::String(s) => {
                 let lossy = String::from_utf8_lossy(s);
                 serializer.serialize_str(&lossy)
             }
-            RpgValue::Symbol(s) => {
+            RubyValue::Symbol(s) => {
                 let mut map = serializer.serialize_map(Some(2))?;
                 map.serialize_entry("__symbol__", &true)?;
                 map.serialize_entry("value", s)?;
                 map.end()
             }
-            RpgValue::Array(arr) => {
+            RubyValue::Array(arr) => {
                 let mut seq = serializer.serialize_seq(Some(arr.len()))?;
                 for item in arr {
                     seq.serialize_element(item)?;
                 }
                 seq.end()
             }
-            RpgValue::Hash(map) => {
+            RubyValue::Hash(map) => {
                 let mut map_ser = serializer.serialize_map(Some(map.len()))?;
                 for (k, v) in map {
                     map_ser.serialize_entry(k, v)?;
                 }
                 map_ser.end()
             }
-            RpgValue::Object { class, fields } => {
+            RubyValue::Object { class, fields } => {
                 let mut map = serializer.serialize_map(Some(fields.len() + 1))?;
                 map.serialize_entry("__class__", class)?;
                 for (k, v) in fields {
@@ -44,7 +44,7 @@ impl Serialize for RpgValue {
                 }
                 map.end()
             }
-            RpgValue::Userdata { class, data } => {
+            RubyValue::Userdata { class, data } => {
                 let mut map = serializer.serialize_map(Some(3))?;
                 map.serialize_entry("__userdata__", &true)?;
                 map.serialize_entry("class", class)?;
@@ -52,14 +52,14 @@ impl Serialize for RpgValue {
                 map.serialize_entry("data", &lossy.as_ref())?;
                 map.end()
             }
-            RpgValue::Instance { value, fields } => {
+            RubyValue::Instance { value, fields } => {
                 let mut map = serializer.serialize_map(Some(3))?;
                 map.serialize_entry("__instance__", &true)?;
                 map.serialize_entry("value", value)?;
                 map.serialize_entry("fields", &ObjectFields(fields))?;
                 map.end()
             }
-            RpgValue::Regex { pattern, flags } => {
+            RubyValue::Regex { pattern, flags } => {
                 let mut map = serializer.serialize_map(Some(3))?;
                 map.serialize_entry("__regex__", &true)?;
                 let lossy = String::from_utf8_lossy(pattern);
@@ -67,7 +67,7 @@ impl Serialize for RpgValue {
                 map.serialize_entry("flags", flags)?;
                 map.end()
             }
-            RpgValue::Struct { class, fields } => {
+            RubyValue::Struct { class, fields } => {
                 let mut map = serializer.serialize_map(Some(fields.len() + 2))?;
                 map.serialize_entry("__struct__", &true)?;
                 map.serialize_entry("class", class)?;
@@ -76,40 +76,40 @@ impl Serialize for RpgValue {
                 }
                 map.end()
             }
-            RpgValue::Class(c) => {
+            RubyValue::Class(c) => {
                 let mut map = serializer.serialize_map(Some(2))?;
                 map.serialize_entry("__class_ref__", &true)?;
                 map.serialize_entry("name", c)?;
                 map.end()
             }
-            RpgValue::Module(m) => {
+            RubyValue::Module(m) => {
                 let mut map = serializer.serialize_map(Some(2))?;
                 map.serialize_entry("__module__", &true)?;
                 map.serialize_entry("name", m)?;
                 map.end()
             }
-            RpgValue::Extended { module, value } => {
+            RubyValue::Extended { module, value } => {
                 let mut map = serializer.serialize_map(Some(3))?;
                 map.serialize_entry("__extended__", &true)?;
                 map.serialize_entry("module", module)?;
                 map.serialize_entry("value", value)?;
                 map.end()
             }
-            RpgValue::UserClass { class, value } => {
+            RubyValue::UserClass { class, value } => {
                 let mut map = serializer.serialize_map(Some(3))?;
                 map.serialize_entry("__user_class__", &true)?;
                 map.serialize_entry("class", class)?;
                 map.serialize_entry("value", value)?;
                 map.end()
             }
-            RpgValue::UserMarshal { class, value } => {
+            RubyValue::UserMarshal { class, value } => {
                 let mut map = serializer.serialize_map(Some(3))?;
                 map.serialize_entry("__user_marshal__", &true)?;
                 map.serialize_entry("class", class)?;
                 map.serialize_entry("value", value)?;
                 map.end()
             }
-            RpgValue::Data { class, value } => {
+            RubyValue::Data { class, value } => {
                 let mut map = serializer.serialize_map(Some(3))?;
                 map.serialize_entry("__data__", &true)?;
                 map.serialize_entry("class", class)?;

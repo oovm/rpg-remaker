@@ -1,10 +1,10 @@
 use crate::marshal::{from_bytes, to_bytes};
-use rpg_types::{Result, RpgError, RpgValue};
+use rpg_types::{Result, RpgError, RubyValue};
 use std::io::{Read, Write};
 
 /// 读取 rvdata2 文件并返回解析后的 RpgValue
 /// 同时生成同名的 yaml 文件
-pub fn read_rvdata2(file_path: &str) -> Result<RpgValue> {
+pub fn read_rvdata2(file_path: &str) -> Result<RubyValue> {
     let mut file = std::fs::File::open(file_path)?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
@@ -18,14 +18,14 @@ pub fn read_rvdata2(file_path: &str) -> Result<RpgValue> {
 }
 
 /// 写入 rvdata2 文件
-pub fn write_rvdata2(file_path: &str, value: &RpgValue) -> Result<()> {
+pub fn write_rvdata2(file_path: &str, value: &RubyValue) -> Result<()> {
     let data = to_bytes(value).map_err(|e| RpgError::encode("rvdata2", &e.to_string()))?;
     let mut file = std::fs::File::create(file_path)?;
     file.write_all(&data)?;
     Ok(())
 }
 
-fn write_yaml(file_path: &str, value: &RpgValue) -> Result<()> {
+fn write_yaml(file_path: &str, value: &RubyValue) -> Result<()> {
     let yaml_str = serde_yaml::to_string(value).map_err(|e| RpgError::encode("yaml", &e.to_string()))?;
     let mut file = std::fs::File::create(file_path)?;
     file.write_all(yaml_str.as_bytes())?;

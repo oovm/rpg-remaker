@@ -1,5 +1,5 @@
 use super::tag::Tag;
-use rpg_types::{RpgFields, RpgHash, RpgHashKey, RpgValue};
+use rpg_types::{RpgFields, RpgHash, RpgHashKey, RubyValue};
 
 /// Marshal 解码错误
 #[derive(Debug, Clone)]
@@ -77,7 +77,7 @@ impl<'a> Decoder<'a> {
     }
 
     /// 解码为 RpgValue
-    pub fn decode(&mut self) -> Result<RpgValue, DecodeError> {
+    pub fn decode(&mut self) -> Result<RubyValue, DecodeError> {
         let tag = self.read_tag()?;
 
         if tag.is_object_link_referenceable() {
@@ -87,31 +87,31 @@ impl<'a> Decoder<'a> {
         self.decode_value(tag)
     }
 
-    fn decode_value(&mut self, tag: Tag) -> Result<RpgValue, DecodeError> {
+    fn decode_value(&mut self, tag: Tag) -> Result<RubyValue, DecodeError> {
         match tag {
-            Tag::Nil => Ok(RpgValue::Nil),
-            Tag::True => Ok(RpgValue::Bool(true)),
-            Tag::False => Ok(RpgValue::Bool(false)),
+            Tag::Nil => Ok(RubyValue::Nil),
+            Tag::True => Ok(RubyValue::Bool(true)),
+            Tag::False => Ok(RubyValue::Bool(false)),
             Tag::Integer => {
                 let i = self.read_packed_int()?;
-                Ok(RpgValue::Integer(i))
+                Ok(RubyValue::Integer(i))
             }
             Tag::Float => {
                 let f = self.read_float()?;
-                Ok(RpgValue::Float(f))
+                Ok(RubyValue::Float(f))
             }
             Tag::String => {
                 let data = self.read_bytes()?;
-                Ok(RpgValue::String(data))
+                Ok(RubyValue::String(data))
             }
             Tag::Symbol => {
                 let sym = self.read_symbol()?;
                 self.symbol_table.push(sym.clone());
-                Ok(RpgValue::Symbol(sym))
+                Ok(RubyValue::Symbol(sym))
             }
             Tag::Symlink => {
                 let index = self.read_packed_int()? as usize;
-                self.symbol_table.get(index).cloned().map(RpgValue::Symbol).ok_or_else(|| DecodeError {
+                self.symbol_table.get(index).cloned().map(RubyValue::Symbol).ok_or_else(|| DecodeError {
                     kind: DecodeErrorKind::UnresolvedSymlink(index),
                     position: Some(self.position),
                 })
@@ -122,7 +122,7 @@ impl<'a> Decoder<'a> {
                 for _ in 0..len {
                     arr.push(self.decode()?);
                 }
-                Ok(RpgValue::Array(arr))
+                Ok(RubyValue::Array(arr))
             }
             Tag::Hash => {
                 let len = self.read_usize()?;
@@ -132,7 +132,7 @@ impl<'a> Decoder<'a> {
                     let value = self.decode()?;
                     hash.insert(RpgHashKey(key), value);
                 }
-                Ok(RpgValue::Hash(hash))
+                Ok(RubyValue::Hash(hash))
             }
             Tag::HashDefault => {
                 let len = self.read_usize()?;
@@ -143,7 +143,7 @@ impl<'a> Decoder<'a> {
                     hash.insert(RpgHashKey(key), value);
                 }
                 let _default = self.decode()?;
-                Ok(RpgValue::Hash(hash))
+                Ok(RubyValue::Hash(hash))
             }
             Tag::Object => {
                 let class = self.read_symbol_either()?;
@@ -154,7 +154,7 @@ impl<'a> Decoder<'a> {
                     let value = self.decode()?;
                     fields.insert(key, value);
                 }
-                Ok(RpgValue::Object { class, fields })
+                Ok(RubyValue::Object { class, fields })
             }
             Tag::Instance => {
                 let value = self.decode()?;
@@ -165,12 +165,12 @@ impl<'a> Decoder<'a> {
                     let value = self.decode()?;
                     fields.insert(key, value);
                 }
-                Ok(RpgValue::Instance { value: Box::new(value), fields })
+                Ok(RubyValue::Instance { value: Box::new(value), fields })
             }
             Tag::UserDef => {
                 let class = self.read_symbol_either()?;
                 let data = self.read_bytes()?;
-                Ok(RpgValue::Userdata { class, data })
+                Ok(RubyValue::Userdata { class, data })
             }
             Tag::Struct => {
                 let class = self.read_symbol_either()?;
@@ -181,40 +181,40 @@ impl<'a> Decoder<'a> {
                     let value = self.decode()?;
                     fields.insert(key, value);
                 }
-                Ok(RpgValue::Struct { class, fields })
+                Ok(RubyValue::Struct { class, fields })
             }
             Tag::ClassRef => {
                 let name = self.read_string()?;
-                Ok(RpgValue::Class(name))
+                Ok(RubyValue::Class(name))
             }
             Tag::ModuleRef => {
                 let name = self.read_string()?;
-                Ok(RpgValue::Module(name))
+                Ok(RubyValue::Module(name))
             }
             Tag::RawRegexp => {
                 let pattern = self.read_bytes()?;
                 let flags = self.read_byte()?;
-                Ok(RpgValue::Regex { pattern, flags })
+                Ok(RubyValue::Regex { pattern, flags })
             }
             Tag::Extended => {
                 let module = self.read_symbol_either()?;
                 let value = self.decode()?;
-                Ok(RpgValue::Extended { module, value: Box::new(value) })
+                Ok(RubyValue::Extended { module, value: Box::new(value) })
             }
             Tag::UserClass => {
                 let class = self.read_symbol_either()?;
                 let value = self.decode()?;
-                Ok(RpgValue::UserClass { class, value: Box::new(value) })
+                Ok(RubyValue::UserClass { class, value: Box::new(value) })
             }
             Tag::UserMarshal => {
                 let class = self.read_symbol_either()?;
                 let value = self.decode()?;
-                Ok(RpgValue::UserMarshal { class, value: Box::new(value) })
+                Ok(RubyValue::UserMarshal { class, value: Box::new(value) })
             }
             Tag::Data => {
                 let class = self.read_symbol_either()?;
                 let value = self.decode()?;
-                Ok(RpgValue::Data { class, value: Box::new(value) })
+                Ok(RubyValue::Data { class, value: Box::new(value) })
             }
             Tag::ObjectLink => {
                 let index = self.read_usize()?;
@@ -340,7 +340,7 @@ impl<'a> Decoder<'a> {
 
 /// 从字节解码 RpgValue
 /// 自动检测并处理 gzip 压缩数据
-pub fn from_bytes(input: &[u8]) -> Result<RpgValue, DecodeError> {
+pub fn from_bytes(input: &[u8]) -> Result<RubyValue, DecodeError> {
     if input.len() < 2 {
         return Err(DecodeError { kind: DecodeErrorKind::Eof, position: None });
     }

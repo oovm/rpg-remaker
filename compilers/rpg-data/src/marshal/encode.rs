@@ -1,7 +1,7 @@
 use indexmap::IndexSet;
 
 use super::tag::Tag;
-use rpg_types::RpgValue;
+use rpg_types::RubyValue;
 
 /// Marshal 编码错误
 #[derive(Debug, Clone)]
@@ -37,43 +37,43 @@ impl Encoder {
     }
 
     /// 编码 RpgValue
-    pub fn encode(&mut self, value: &RpgValue) -> Result<Vec<u8>, EncodeError> {
+    pub fn encode(&mut self, value: &RubyValue) -> Result<Vec<u8>, EncodeError> {
         self.encode_value(value)?;
         Ok(std::mem::take(&mut self.output))
     }
 
-    fn encode_value(&mut self, value: &RpgValue) -> Result<(), EncodeError> {
+    fn encode_value(&mut self, value: &RubyValue) -> Result<(), EncodeError> {
         match value {
-            RpgValue::Nil => {
+            RubyValue::Nil => {
                 self.write_tag(Tag::Nil);
             }
-            RpgValue::Bool(b) => {
+            RubyValue::Bool(b) => {
                 self.write_tag(if *b { Tag::True } else { Tag::False });
             }
-            RpgValue::Integer(i) => {
+            RubyValue::Integer(i) => {
                 self.write_tag(Tag::Integer);
                 self.write_packed_int(*i);
             }
-            RpgValue::Float(f) => {
+            RubyValue::Float(f) => {
                 self.write_tag(Tag::Float);
                 let s = f.to_string();
                 self.write_bytes_len(s.as_bytes());
             }
-            RpgValue::String(s) => {
+            RubyValue::String(s) => {
                 self.write_tag(Tag::String);
                 self.write_bytes_len(s);
             }
-            RpgValue::Symbol(s) => {
+            RubyValue::Symbol(s) => {
                 self.write_symbol(s);
             }
-            RpgValue::Array(arr) => {
+            RubyValue::Array(arr) => {
                 self.write_tag(Tag::Array);
                 self.write_packed_int(arr.len() as i32);
                 for item in arr {
                     self.encode_value(item)?;
                 }
             }
-            RpgValue::Hash(hash) => {
+            RubyValue::Hash(hash) => {
                 self.write_tag(Tag::Hash);
                 self.write_packed_int(hash.len() as i32);
                 for (k, v) in hash {
@@ -81,7 +81,7 @@ impl Encoder {
                     self.encode_value(v)?;
                 }
             }
-            RpgValue::Object { class, fields } => {
+            RubyValue::Object { class, fields } => {
                 self.write_tag(Tag::Object);
                 self.write_symbol(class);
                 self.write_packed_int(fields.len() as i32);
@@ -90,12 +90,12 @@ impl Encoder {
                     self.encode_value(v)?;
                 }
             }
-            RpgValue::Userdata { class, data } => {
+            RubyValue::Userdata { class, data } => {
                 self.write_tag(Tag::UserDef);
                 self.write_symbol(class);
                 self.write_bytes_len(data);
             }
-            RpgValue::Instance { value, fields } => {
+            RubyValue::Instance { value, fields } => {
                 self.write_tag(Tag::Instance);
                 self.encode_value(value)?;
                 self.write_packed_int(fields.len() as i32);
@@ -104,12 +104,12 @@ impl Encoder {
                     self.encode_value(v)?;
                 }
             }
-            RpgValue::Regex { pattern, flags } => {
+            RubyValue::Regex { pattern, flags } => {
                 self.write_tag(Tag::RawRegexp);
                 self.write_bytes_len(pattern);
                 self.write_byte(*flags);
             }
-            RpgValue::Struct { class, fields } => {
+            RubyValue::Struct { class, fields } => {
                 self.write_tag(Tag::Struct);
                 self.write_symbol(class);
                 self.write_packed_int(fields.len() as i32);
@@ -118,30 +118,30 @@ impl Encoder {
                     self.encode_value(v)?;
                 }
             }
-            RpgValue::Class(c) => {
+            RubyValue::Class(c) => {
                 self.write_tag(Tag::ClassRef);
                 self.write_bytes_len(c.as_bytes());
             }
-            RpgValue::Module(m) => {
+            RubyValue::Module(m) => {
                 self.write_tag(Tag::ModuleRef);
                 self.write_bytes_len(m.as_bytes());
             }
-            RpgValue::Extended { module, value } => {
+            RubyValue::Extended { module, value } => {
                 self.write_tag(Tag::Extended);
                 self.write_symbol(module);
                 self.encode_value(value)?;
             }
-            RpgValue::UserClass { class, value } => {
+            RubyValue::UserClass { class, value } => {
                 self.write_tag(Tag::UserClass);
                 self.write_symbol(class);
                 self.encode_value(value)?;
             }
-            RpgValue::UserMarshal { class, value } => {
+            RubyValue::UserMarshal { class, value } => {
                 self.write_tag(Tag::UserMarshal);
                 self.write_symbol(class);
                 self.encode_value(value)?;
             }
-            RpgValue::Data { class, value } => {
+            RubyValue::Data { class, value } => {
                 self.write_tag(Tag::Data);
                 self.write_symbol(class);
                 self.encode_value(value)?;
@@ -202,7 +202,7 @@ impl Encoder {
 }
 
 /// 将 RpgValue 编码为字节
-pub fn to_bytes(value: &RpgValue) -> Result<Vec<u8>, EncodeError> {
+pub fn to_bytes(value: &RubyValue) -> Result<Vec<u8>, EncodeError> {
     let mut encoder = Encoder::new();
     encoder.encode(value)
 }

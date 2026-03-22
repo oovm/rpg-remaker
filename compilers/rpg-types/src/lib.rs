@@ -9,5 +9,5 @@ pub mod ruby_value;
 
 pub use crate::{
     errors::{Result, RpgError},
-    ruby_value::{RpgFields, RpgHash, RpgHashKey, RpgValue},
+    ruby_value::{RpgFields, RpgHash, RpgHashKey, RubyValue},
 };
