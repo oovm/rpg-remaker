@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+use std::{
+    collections::HashMap,
+    hash::{Hash, Hasher},
+};
 
-mod ser;
 mod de;
+mod ser;
 
 /// RPG Maker 数据格式中的值类型
 ///
@@ -136,44 +138,25 @@ impl PartialEq for RpgValue {
             (RpgValue::Symbol(a), RpgValue::Symbol(b)) => a == b,
             (RpgValue::Array(a), RpgValue::Array(b)) => a == b,
             (RpgValue::Hash(a), RpgValue::Hash(b)) => a == b,
-            (
-                RpgValue::Object { class: c1, fields: f1 },
-                RpgValue::Object { class: c2, fields: f2 },
-            ) => c1 == c2 && f1 == f2,
-            (
-                RpgValue::Userdata { class: c1, data: d1 },
-                RpgValue::Userdata { class: c2, data: d2 },
-            ) => c1 == c2 && d1 == d2,
-            (
-                RpgValue::Instance { value: v1, fields: f1 },
-                RpgValue::Instance { value: v2, fields: f2 },
-            ) => v1 == v2 && f1 == f2,
-            (
-                RpgValue::Regex { pattern: p1, flags: f1 },
-                RpgValue::Regex { pattern: p2, flags: f2 },
-            ) => p1 == p2 && f1 == f2,
-            (
-                RpgValue::Struct { class: c1, fields: f1 },
-                RpgValue::Struct { class: c2, fields: f2 },
-            ) => c1 == c2 && f1 == f2,
+            (RpgValue::Object { class: c1, fields: f1 }, RpgValue::Object { class: c2, fields: f2 }) => c1 == c2 && f1 == f2,
+            (RpgValue::Userdata { class: c1, data: d1 }, RpgValue::Userdata { class: c2, data: d2 }) => c1 == c2 && d1 == d2,
+            (RpgValue::Instance { value: v1, fields: f1 }, RpgValue::Instance { value: v2, fields: f2 }) => {
+                v1 == v2 && f1 == f2
+            }
+            (RpgValue::Regex { pattern: p1, flags: f1 }, RpgValue::Regex { pattern: p2, flags: f2 }) => p1 == p2 && f1 == f2,
+            (RpgValue::Struct { class: c1, fields: f1 }, RpgValue::Struct { class: c2, fields: f2 }) => c1 == c2 && f1 == f2,
             (RpgValue::Class(a), RpgValue::Class(b)) => a == b,
             (RpgValue::Module(a), RpgValue::Module(b)) => a == b,
-            (
-                RpgValue::Extended { module: m1, value: v1 },
-                RpgValue::Extended { module: m2, value: v2 },
-            ) => m1 == m2 && v1 == v2,
-            (
-                RpgValue::UserClass { class: c1, value: v1 },
-                RpgValue::UserClass { class: c2, value: v2 },
-            ) => c1 == c2 && v1 == v2,
-            (
-                RpgValue::UserMarshal { class: c1, value: v1 },
-                RpgValue::UserMarshal { class: c2, value: v2 },
-            ) => c1 == c2 && v1 == v2,
-            (
-                RpgValue::Data { class: c1, value: v1 },
-                RpgValue::Data { class: c2, value: v2 },
-            ) => c1 == c2 && v1 == v2,
+            (RpgValue::Extended { module: m1, value: v1 }, RpgValue::Extended { module: m2, value: v2 }) => {
+                m1 == m2 && v1 == v2
+            }
+            (RpgValue::UserClass { class: c1, value: v1 }, RpgValue::UserClass { class: c2, value: v2 }) => {
+                c1 == c2 && v1 == v2
+            }
+            (RpgValue::UserMarshal { class: c1, value: v1 }, RpgValue::UserMarshal { class: c2, value: v2 }) => {
+                c1 == c2 && v1 == v2
+            }
+            (RpgValue::Data { class: c1, value: v1 }, RpgValue::Data { class: c2, value: v2 }) => c1 == c2 && v1 == v2,
             _ => false,
         }
     }
@@ -291,10 +274,7 @@ impl RpgValue {
 
     /// 创建一个对象值
     pub fn object(class: impl Into<String>, fields: RpgFields) -> Self {
-        RpgValue::Object {
-            class: class.into(),
-            fields,
-        }
+        RpgValue::Object { class: class.into(), fields }
     }
 
     /// 检查是否为 Nil

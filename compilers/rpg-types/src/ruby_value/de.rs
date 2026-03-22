@@ -1,8 +1,7 @@
 use serde::de::{self, Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
-use std::collections::HashMap;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
-use super::RpgValue;
+use super::{RpgFields, RpgHash, RpgHashKey, RpgValue};
 
 impl<'de> Deserialize<'de> for RpgValue {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -107,25 +106,20 @@ impl<'de> Visitor<'de> for RpgValueVisitor {
     where
         A: MapAccess<'de>,
     {
-        let mut fields = HashMap::with_capacity(map.size_hint().unwrap_or(0));
+        use super::RpgHash;
+        let mut fields = RpgHash::with_capacity(map.size_hint().unwrap_or(0));
         while let Some((key, value)) = map.next_entry()? {
-            fields.insert(key, value);
+            fields.insert(super::RpgHashKey(key), value);
         }
         Ok(RpgValue::Hash(fields))
     }
 }
 
-impl<'de> Deserialize<'de> for HashMap<RpgValue, RpgValue> {
+impl<'de> Deserialize<'de> for RpgHashKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_map(RpgValueVisitor).and_then(|v| {
-            if let RpgValue::Hash(map) = v {
-                Ok(map)
-            } else {
-                Err(de::Error::custom("expected a map"))
-            }
-        })
+        RpgValue::deserialize(deserializer).map(RpgHashKey)
     }
 }

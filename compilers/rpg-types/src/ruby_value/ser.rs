@@ -16,9 +16,7 @@ impl Serialize for RpgValue {
                 let lossy = String::from_utf8_lossy(s);
                 serializer.serialize_str(&lossy)
             }
-            RpgValue::Symbol(s) => {
-                serializer.serialize_newtype_struct("!symbol", &SymbolWrapper(s))
-            }
+            RpgValue::Symbol(s) => serializer.serialize_newtype_struct("!symbol", &SymbolWrapper(s)),
             RpgValue::Array(arr) => {
                 let mut seq = serializer.serialize_seq(Some(arr.len()))?;
                 for item in arr {
@@ -59,12 +57,8 @@ impl Serialize for RpgValue {
             RpgValue::Struct { class, fields } => {
                 serializer.serialize_newtype_struct(&format!("!struct:{}", class), &ObjectFields(fields))
             }
-            RpgValue::Class(c) => {
-                serializer.serialize_newtype_struct("!class", c)
-            }
-            RpgValue::Module(m) => {
-                serializer.serialize_newtype_struct("!module", m)
-            }
+            RpgValue::Class(c) => serializer.serialize_newtype_struct("!class", c),
+            RpgValue::Module(m) => serializer.serialize_newtype_struct("!module", m),
             RpgValue::Extended { module, value } => {
                 let mut map = serializer.serialize_map(Some(2))?;
                 map.serialize_entry("module", module)?;

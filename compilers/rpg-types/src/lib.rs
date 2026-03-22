@@ -8,4 +8,4 @@ pub mod errors;
 pub mod ruby_value;
 
 pub use crate::errors::{Result, RpgError};
-pub use crate::ruby_value::RpgValue;
+pub use crate::ruby_value::{RpgFields, RpgHash, RpgHashKey, RpgValue};

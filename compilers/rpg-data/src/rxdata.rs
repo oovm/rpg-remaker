@@ -1,5 +1,5 @@
 use crate::ruby_value::value_to_rpg;
-use alox_48::{from_bytes, to_bytes, Value};
+use alox_48::{Value, from_bytes, to_bytes};
 use flate2::read::GzDecoder;
 use rpg_types::{Result, RpgError, RpgValue};
 use std::io::{Read, Write};
@@ -28,11 +28,7 @@ pub fn read_rxdata(file_path: &str) -> Result<RpgValue> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
-    let data = if is_gzip_compressed(&buffer) {
-        decompress_gzip(&buffer)?
-    } else {
-        buffer
-    };
+    let data = if is_gzip_compressed(&buffer) { decompress_gzip(&buffer)? } else { buffer };
 
     let value: Value = from_bytes(&data).map_err(|e| RpgError::decode("rxdata", &e.to_string()))?;
 
