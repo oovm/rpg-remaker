@@ -24,3 +24,4 @@ pub enum RpgError {
 pub type Result<T> = std::result::Result<T, RpgError>;
 
 pub mod rvdata2;
+pub mod rxdata;
