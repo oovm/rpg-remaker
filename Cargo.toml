@@ -19,7 +19,11 @@ license = "AGPL-3.0-only"
 [workspace.dependencies]
 alox-48 = "0.6.0"
 clap = { version = "*", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+walkdir = "2.0"
 rpg-data = { path = "compilers/rpg-data", version = "0.0.0" }
+rpg-types = { path = "compilers/rpg-types", version = "0.0.0" }
 
 [profile.release]
 lto = true

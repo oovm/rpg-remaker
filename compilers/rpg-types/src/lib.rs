@@ -3,5 +3,5 @@
 #![doc = include_str!("../readme.md")]
 
 pub mod errors;
-
+pub mod ruby_value;
 pub use crate::errors::{Result, RpgError};
