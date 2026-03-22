@@ -1,8 +1,7 @@
 //! RPG Maker 角色数据类型
 
+use crate::{Result, ruby_value::RubyValue};
 use serde::{Deserialize, Serialize};
-use crate::ruby_value::RubyValue;
-use crate::Result;
 
 /// RPG Maker 角色数据
 ///
@@ -83,46 +82,34 @@ impl RpgActor {
     pub fn from_ruby_value(value: &RubyValue) -> Result<Self> {
         if let RubyValue::Object { class, fields } = value {
             if class != "RPG::Actor" {
-                return Err(crate::errors::RpgError::decode(
-                    "RpgActor",
-                    &format!("expected RPG::Actor, got {}", class),
-                ));
+                return Err(crate::errors::RpgError::decode("RpgActor", &format!("expected RPG::Actor, got {}", class)));
             }
 
-            let temp_value = RubyValue::Object {
-                class: "__temp".to_string(),
-                fields: fields.clone(),
-            };
-            
-            let yaml = serde_yaml::to_string(&temp_value)
-                .map_err(|e| crate::errors::RpgError::decode("RpgActor", &e.to_string()))?;
-            
-            let actor: Self = serde_yaml::from_str(&yaml)
-                .map_err(|e| crate::errors::RpgError::decode("RpgActor", &e.to_string()))?;
-            
+            let temp_value = RubyValue::Object { class: "__temp".to_string(), fields: fields.clone() };
+
+            let yaml =
+                serde_yaml::to_string(&temp_value).map_err(|e| crate::errors::RpgError::decode("RpgActor", &e.to_string()))?;
+
+            let actor: Self =
+                serde_yaml::from_str(&yaml).map_err(|e| crate::errors::RpgError::decode("RpgActor", &e.to_string()))?;
+
             Ok(actor)
-        } else {
-            Err(crate::errors::RpgError::decode(
-                "RpgActor",
-                "expected RubyValue::Object",
-            ))
+        }
+        else {
+            Err(crate::errors::RpgError::decode("RpgActor", "expected RubyValue::Object"))
         }
     }
 
     /// 转换为 RubyValue
     pub fn to_ruby_value(&self) -> RubyValue {
-        let yaml = serde_yaml::to_string(self)
-            .expect("Failed to serialize RpgActor to YAML");
-        
-        let temp_value: RubyValue = serde_yaml::from_str(&yaml)
-            .expect("Failed to deserialize YAML to RubyValue");
-        
+        let yaml = serde_yaml::to_string(self).expect("Failed to serialize RpgActor to YAML");
+
+        let temp_value: RubyValue = serde_yaml::from_str(&yaml).expect("Failed to deserialize YAML to RubyValue");
+
         if let RubyValue::Object { fields, .. } = temp_value {
-            RubyValue::Object {
-                class: "RPG::Actor".to_string(),
-                fields,
-            }
-        } else {
+            RubyValue::Object { class: "RPG::Actor".to_string(), fields }
+        }
+        else {
             panic!("Expected Object structure");
         }
     }

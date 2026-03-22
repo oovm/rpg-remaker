@@ -1,10 +1,9 @@
 //! RPG Maker 游戏数据类型
-//! 
+//!
 //! 提供 RPG Maker XP/VX/VX Ace/MV/MZ 游戏中常见的数据类型定义，
 //! 以及这些类型与 RubyValue 之间的转换功能。
 
-use crate::ruby_value::RubyValue;
-use crate::Result;
+use crate::{Result, ruby_value::RubyValue};
 
 mod actor;
 pub use actor::RpgActor;
@@ -24,10 +23,7 @@ impl RpgMakerData {
     pub fn from_ruby_value(value: &RubyValue, data_type: &str) -> Result<Self> {
         match data_type {
             "Actors" => Self::actors_from_ruby_value(value),
-            _ => Err(crate::errors::RpgError::decode(
-                "RpgMakerData",
-                &format!("unsupported data type: {}", data_type),
-            )),
+            _ => Err(crate::errors::RpgError::decode("RpgMakerData", &format!("unsupported data type: {}", data_type))),
         }
     }
 
@@ -52,11 +48,9 @@ impl RpgMakerData {
                 }
             }
             Ok(RpgMakerData::Actors(actors))
-        } else {
-            Err(crate::errors::RpgError::decode(
-                "RpgMakerData",
-                "expected Array for Actors data",
-            ))
+        }
+        else {
+            Err(crate::errors::RpgError::decode("RpgMakerData", "expected Array for Actors data"))
         }
     }
 

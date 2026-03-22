@@ -79,29 +79,30 @@ impl<'a> Decoder<'a> {
     /// 解码为 RpgValue
     pub fn decode(&mut self) -> Result<RubyValue, DecodeError> {
         let b = self.read_byte()?;
-        
-        // 检查是否是直接编码的整数（-123 到 122）
+
+        // 首先检查是否是有效的标签
+        if let Some(tag) = Tag::from_u8(b) {
+            // 如果是标签，按标签处理
+            if tag.is_object_link_referenceable() {
+                self.object_table.push(self.position);
+            }
+            return self.decode_value(tag);
+        }
+
+        // 如果不是标签，检查是否是直接编码的整数
         if b >= 0x05 && b <= 0x7F {
             // 正整数: value = b - 5
             let value = (b - 5) as i32;
             return Ok(RubyValue::Integer(value));
-        } else if b >= 0x80 && b <= 0xFB {
+        }
+        else if b >= 0x80 {
             // 负整数: value = b - 256 - 5
             let value = (b as i8 - 5) as i32;
             return Ok(RubyValue::Integer(value));
         }
-        
-        // 否则，将其作为标签处理
-        let tag = Tag::from_u8(b).ok_or_else(|| DecodeError { 
-            kind: DecodeErrorKind::InvalidTag(b), 
-            position: Some(self.position - 1) 
-        })?;
 
-        if tag.is_object_link_referenceable() {
-            self.object_table.push(self.position);
-        }
-
-        self.decode_value(tag)
+        // 既不是标签也不是直接编码的整数，返回错误
+        Err(DecodeError { kind: DecodeErrorKind::InvalidTag(b), position: Some(self.position - 1) })
     }
 
     fn decode_value(&mut self, tag: Tag) -> Result<RubyValue, DecodeError> {
@@ -126,7 +127,8 @@ impl<'a> Decoder<'a> {
                 }
                 if result >= i32::MIN as i64 && result <= i32::MAX as i64 {
                     Ok(RubyValue::Integer(result as i32))
-                } else {
+                }
+                else {
                     Ok(RubyValue::Integer(result as i32))
                 }
             }
@@ -259,8 +261,7 @@ impl<'a> Decoder<'a> {
 
                 let current_pos = self.position;
                 self.position = target_pos;
-                let tag = self.read_tag()?;
-                let value = self.decode_value(tag)?;
+                let value = self.decode()?;
                 self.position = current_pos;
                 Ok(value)
             }
@@ -280,8 +281,10 @@ impl<'a> Decoder<'a> {
         let b = self.read_byte()?;
         let tag = Tag::from_u8(b);
         if tag.is_none() {
-            eprintln!("[DEBUG] Invalid tag 0x{:02X} at position {}, context: {:02X?}", 
-                b, self.position - 1, 
+            eprintln!(
+                "[DEBUG] Invalid tag 0x{:02X} at position {}, context: {:02X?}",
+                b,
+                self.position - 1,
                 &self.input[self.position.saturating_sub(10)..self.position.min(self.input.len())]
             );
         }
@@ -374,12 +377,14 @@ impl<'a> Decoder<'a> {
                     position: Some(self.position),
                 })
             }
-            _ => Err(DecodeError { 
+            _ => Err(DecodeError {
                 kind: DecodeErrorKind::Other(format!(
-                    "expected symbol or symlink, got {:?} (0x{:02X}) at position {}", 
-                    tag, tag as u8, self.position - 1
-                )), 
-                position: Some(self.position - 1) 
+                    "expected symbol or symlink, got {:?} (0x{:02X}) at position {}",
+                    tag,
+                    tag as u8,
+                    self.position - 1
+                )),
+                position: Some(self.position - 1),
             }),
         }
     }
