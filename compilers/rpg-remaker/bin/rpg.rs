@@ -1,9 +1,7 @@
 use clap::Parser;
 use rpg_data::{read_rvdata2, read_rxdata, write_rvdata2, write_rxdata};
 use rpg_types::{Result, RubyValue};
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
+use std::{fs::File, io::Read, path::Path};
 use walkdir::WalkDir;
 
 #[derive(Parser, Debug)]
@@ -92,23 +90,20 @@ fn encode_file(path: &Path) {
         return;
     }
 
-    let result = read_yaml(path.to_str().unwrap())
-        .and_then(|value| {
-            let file_stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-            let output_path = match file_stem {
-                "Actor" | "Class" | "Skill" | "Item" | "Weapon" | "Armor" | "Enemy" | "Troop" | "State" | "Animation" | "CommonEvent" | "System" | "Map" => {
-                    path.to_str().unwrap().replace(".yaml", ".rvdata2")
-                }
-                _ => {
-                    path.to_str().unwrap().replace(".yaml", ".rvdata2")
-                }
-            };
-            write_rvdata2(&output_path, &value)
-        });
+    let result = read_yaml(path.to_str().unwrap()).and_then(|value| {
+        let file_stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+        let output_path = match file_stem {
+            "Actor" | "Class" | "Skill" | "Item" | "Weapon" | "Armor" | "Enemy" | "Troop" | "State" | "Animation"
+            | "CommonEvent" | "System" | "Map" => path.to_str().unwrap().replace(".yaml", ".rvdata2"),
+            _ => path.to_str().unwrap().replace(".yaml", ".rvdata2"),
+        };
+        write_rvdata2(&output_path, &value)
+    });
 
     if let Err(e) = result {
         eprintln!("编码 {} 失败: {}", path.display(), e);
-    } else {
+    }
+    else {
         println!("成功编码 {}", path.display());
     }
 }

@@ -1,3 +1,4 @@
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde::de::{self, Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
 use std::{collections::HashMap, fmt};
 
@@ -54,6 +55,20 @@ impl<'de> Visitor<'de> for RpgValueVisitor {
         E: de::Error,
     {
         Ok(RubyValue::Integer(v))
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(RubyValue::Integer(v as i32))
+    }
+
+    fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(RubyValue::Integer(v as i32))
     }
 
     fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
@@ -125,7 +140,8 @@ impl<'de> Visitor<'de> for RpgValueVisitor {
 
         if let Some(RubyValue::Bool(true)) = raw_map.get("__userdata__") {
             let class = extract_string(raw_map.get("class"));
-            let data = extract_bytes(raw_map.get("data"));
+            let data_str = extract_string(raw_map.get("data"));
+            let data = if !data_str.is_empty() { STANDARD.decode(data_str).unwrap_or_default() } else { Vec::new() };
             return Ok(RubyValue::Userdata { class, data });
         }
 

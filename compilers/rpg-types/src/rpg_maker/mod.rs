@@ -3,7 +3,7 @@
 //! 提供 RPG Maker XP/VX/VX Ace/MV/MZ 游戏中常见的数据类型定义，
 //! 以及这些类型与 RubyValue 之间的转换功能。
 
-use crate::{ruby_value::RubyValue, Result};
+use crate::{Result, ruby_value::RubyValue};
 
 mod actor;
 pub use actor::RpgActor;
