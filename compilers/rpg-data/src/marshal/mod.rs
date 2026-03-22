@@ -5,6 +5,5 @@ mod decode;
 /// Marshal 编码器
 mod encode;
 
-pub use decode::{from_bytes, DecodeError, DecodeErrorKind};
+pub use decode::{from_bytes, DecodeError};
 pub use encode::{to_bytes, EncodeError};
-pub use tag::Tag;

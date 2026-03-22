@@ -1,5 +1,5 @@
 use super::tag::Tag;
-use crate::{RpgFields, RpgHash, RpgHashKey, RpgValue};
+use rpg_types::{RpgFields, RpgHash, RpgHashKey, RpgValue};
 
 /// Marshal 解码错误
 #[derive(Debug, Clone)]
@@ -70,18 +70,10 @@ impl<'a> Decoder<'a> {
         }
 
         if input[0] != 4 || input[1] != 8 {
-            return Err(DecodeError { 
-                kind: DecodeErrorKind::VersionError([input[0], input[1]]), 
-                position: None 
-            });
+            return Err(DecodeError { kind: DecodeErrorKind::VersionError([input[0], input[1]]), position: None });
         }
 
-        Ok(Self {
-            input,
-            position: 2,
-            symbol_table: Vec::new(),
-            object_table: Vec::new(),
-        })
+        Ok(Self { input, position: 2, symbol_table: Vec::new(), object_table: Vec::new() })
     }
 
     /// 解码为 RpgValue
@@ -119,14 +111,10 @@ impl<'a> Decoder<'a> {
             }
             Tag::Symlink => {
                 let index = self.read_packed_int()? as usize;
-                self.symbol_table
-                    .get(index)
-                    .cloned()
-                    .map(RpgValue::Symbol)
-                    .ok_or_else(|| DecodeError { 
-                        kind: DecodeErrorKind::UnresolvedSymlink(index), 
-                        position: Some(self.position) 
-                    })
+                self.symbol_table.get(index).cloned().map(RpgValue::Symbol).ok_or_else(|| DecodeError {
+                    kind: DecodeErrorKind::UnresolvedSymlink(index),
+                    position: Some(self.position),
+                })
             }
             Tag::Array => {
                 let len = self.read_usize()?;
@@ -177,10 +165,7 @@ impl<'a> Decoder<'a> {
                     let value = self.decode()?;
                     fields.insert(key, value);
                 }
-                Ok(RpgValue::Instance { 
-                    value: Box::new(value), 
-                    fields 
-                })
+                Ok(RpgValue::Instance { value: Box::new(value), fields })
             }
             Tag::UserDef => {
                 let class = self.read_symbol_either()?;
@@ -214,40 +199,28 @@ impl<'a> Decoder<'a> {
             Tag::Extended => {
                 let module = self.read_symbol_either()?;
                 let value = self.decode()?;
-                Ok(RpgValue::Extended { 
-                    module, 
-                    value: Box::new(value) 
-                })
+                Ok(RpgValue::Extended { module, value: Box::new(value) })
             }
             Tag::UserClass => {
                 let class = self.read_symbol_either()?;
                 let value = self.decode()?;
-                Ok(RpgValue::UserClass { 
-                    class, 
-                    value: Box::new(value) 
-                })
+                Ok(RpgValue::UserClass { class, value: Box::new(value) })
             }
             Tag::UserMarshal => {
                 let class = self.read_symbol_either()?;
                 let value = self.decode()?;
-                Ok(RpgValue::UserMarshal { 
-                    class, 
-                    value: Box::new(value) 
-                })
+                Ok(RpgValue::UserMarshal { class, value: Box::new(value) })
             }
             Tag::Data => {
                 let class = self.read_symbol_either()?;
                 let value = self.decode()?;
-                Ok(RpgValue::Data { 
-                    class, 
-                    value: Box::new(value) 
-                })
+                Ok(RpgValue::Data { class, value: Box::new(value) })
             }
             Tag::ObjectLink => {
                 let index = self.read_usize()?;
-                let target_pos = self.object_table.get(index).copied().ok_or_else(|| DecodeError { 
-                    kind: DecodeErrorKind::UnresolvedObjectLink(index), 
-                    position: Some(self.position) 
+                let target_pos = self.object_table.get(index).copied().ok_or_else(|| DecodeError {
+                    kind: DecodeErrorKind::UnresolvedObjectLink(index),
+                    position: Some(self.position),
                 })?;
 
                 let current_pos = self.position;
@@ -271,10 +244,7 @@ impl<'a> Decoder<'a> {
 
     fn read_tag(&mut self) -> Result<Tag, DecodeError> {
         let b = self.read_byte()?;
-        Tag::from_u8(b).ok_or_else(|| DecodeError { 
-            kind: DecodeErrorKind::InvalidTag(b), 
-            position: Some(self.position - 1) 
-        })
+        Tag::from_u8(b).ok_or_else(|| DecodeError { kind: DecodeErrorKind::InvalidTag(b), position: Some(self.position - 1) })
     }
 
     fn read_packed_int(&mut self) -> Result<i32, DecodeError> {
@@ -308,10 +278,7 @@ impl<'a> Decoder<'a> {
     fn read_usize(&mut self) -> Result<usize, DecodeError> {
         let raw = self.read_packed_int()?;
         if raw < 0 {
-            return Err(DecodeError { 
-                kind: DecodeErrorKind::NegativeLength(raw), 
-                position: Some(self.position) 
-            });
+            return Err(DecodeError { kind: DecodeErrorKind::NegativeLength(raw), position: Some(self.position) });
         }
         Ok(raw as usize)
     }
@@ -319,19 +286,16 @@ impl<'a> Decoder<'a> {
     fn read_float(&mut self) -> Result<f64, DecodeError> {
         let bytes = self.read_bytes()?;
         let s = String::from_utf8_lossy(&bytes);
-        
+
         if let Some(pos) = s.find('\0') {
             let str_part = &s[..pos];
-            let float: f64 = str_part.parse().map_err(|_| DecodeError { 
-                kind: DecodeErrorKind::ParseFloatError, 
-                position: Some(self.position) 
-            })?;
+            let float: f64 = str_part
+                .parse()
+                .map_err(|_| DecodeError { kind: DecodeErrorKind::ParseFloatError, position: Some(self.position) })?;
             Ok(float)
-        } else {
-            s.parse().map_err(|_| DecodeError { 
-                kind: DecodeErrorKind::ParseFloatError, 
-                position: Some(self.position) 
-            })
+        }
+        else {
+            s.parse().map_err(|_| DecodeError { kind: DecodeErrorKind::ParseFloatError, position: Some(self.position) })
         }
     }
 
@@ -347,10 +311,7 @@ impl<'a> Decoder<'a> {
 
     fn read_string(&mut self) -> Result<String, DecodeError> {
         let bytes = self.read_bytes()?;
-        String::from_utf8(bytes).map_err(|_| DecodeError { 
-            kind: DecodeErrorKind::InvalidUtf8, 
-            position: Some(self.position) 
-        })
+        String::from_utf8(bytes).map_err(|_| DecodeError { kind: DecodeErrorKind::InvalidUtf8, position: Some(self.position) })
     }
 
     fn read_symbol(&mut self) -> Result<String, DecodeError> {
@@ -367,24 +328,35 @@ impl<'a> Decoder<'a> {
             }
             Tag::Symlink => {
                 let index = self.read_packed_int()? as usize;
-                self.symbol_table
-                    .get(index)
-                    .cloned()
-                    .ok_or_else(|| DecodeError { 
-                        kind: DecodeErrorKind::UnresolvedSymlink(index), 
-                        position: Some(self.position) 
-                    })
+                self.symbol_table.get(index).cloned().ok_or_else(|| DecodeError {
+                    kind: DecodeErrorKind::UnresolvedSymlink(index),
+                    position: Some(self.position),
+                })
             }
-            _ => Err(DecodeError { 
-                kind: DecodeErrorKind::InvalidTag(tag as u8), 
-                position: Some(self.position - 1) 
-            }),
+            _ => Err(DecodeError { kind: DecodeErrorKind::InvalidTag(tag as u8), position: Some(self.position - 1) }),
         }
     }
 }
 
 /// 从字节解码 RpgValue
+/// 自动检测并处理 gzip 压缩数据
 pub fn from_bytes(input: &[u8]) -> Result<RpgValue, DecodeError> {
+    if input.len() < 2 {
+        return Err(DecodeError { kind: DecodeErrorKind::Eof, position: None });
+    }
+
+    // 检测 gzip 魔数 (0x1f 0x8b)
+    if input[0] == 0x1f && input[1] == 0x8b {
+        let mut decoder = flate2::read::GzDecoder::new(input);
+        let mut decompressed = Vec::new();
+        std::io::Read::read_to_end(&mut decoder, &mut decompressed).map_err(|e| DecodeError {
+            kind: DecodeErrorKind::Other(format!("gzip decompression failed: {}", e)),
+            position: None,
+        })?;
+        let mut decoder = Decoder::new(&decompressed)?;
+        return decoder.decode();
+    }
+
     let mut decoder = Decoder::new(input)?;
     decoder.decode()
 }

@@ -1,5 +1,5 @@
-use flate2::read::GzDecoder;
-use rpg_types::{from_bytes, to_bytes, Result, RpgError, RpgValue};
+use crate::marshal::{from_bytes, to_bytes};
+use rpg_types::{Result, RpgError, RpgValue};
 use std::io::{Read, Write};
 
 /// 读取 rvdata2 文件并返回解析后的 RpgValue
@@ -25,7 +25,6 @@ pub fn write_rvdata2(file_path: &str, value: &RpgValue) -> Result<()> {
     Ok(())
 }
 
-/// 将值写入 yaml 文件
 fn write_yaml(file_path: &str, value: &RpgValue) -> Result<()> {
     let yaml_str = serde_yaml::to_string(value).map_err(|e| RpgError::encode("yaml", &e.to_string()))?;
     let mut file = std::fs::File::create(file_path)?;

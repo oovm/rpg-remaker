@@ -83,10 +83,7 @@ impl Tag {
 
     /// 检查是否可以被对象链接引用
     pub fn is_object_link_referenceable(self) -> bool {
-        !matches!(
-            self,
-            Self::Nil | Self::True | Self::False | Self::Integer | Self::Symbol | Self::Symlink | Self::ObjectLink
-        )
+        !matches!(self, Self::Nil | Self::True | Self::False | Self::Integer | Self::Symbol | Self::Symlink | Self::ObjectLink)
     }
 }
 

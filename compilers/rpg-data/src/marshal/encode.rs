@@ -1,7 +1,7 @@
 use indexmap::IndexSet;
 
 use super::tag::Tag;
-use crate::RpgValue;
+use rpg_types::RpgValue;
 
 /// Marshal 编码错误
 #[derive(Debug, Clone)]
@@ -26,10 +26,7 @@ pub struct Encoder {
 
 impl Default for Encoder {
     fn default() -> Self {
-        Self {
-            output: vec![4, 8],
-            symbol_table: IndexSet::new(),
-        }
+        Self { output: vec![4, 8], symbol_table: IndexSet::new() }
     }
 }
 
@@ -177,11 +174,7 @@ impl Encoder {
                         break;
                     }
                 }
-                let len_byte = if v < 0 {
-                    (256 - bytes.len()) as u8
-                } else {
-                    bytes.len() as u8
-                };
+                let len_byte = if v < 0 { (256 - bytes.len()) as u8 } else { bytes.len() as u8 };
                 self.write_byte(len_byte);
                 for b in bytes {
                     self.write_byte(b);
@@ -194,7 +187,8 @@ impl Encoder {
         if let Some(idx) = self.symbol_table.get_index_of(sym) {
             self.write_tag(Tag::Symlink);
             self.write_packed_int(idx as i32);
-        } else {
+        }
+        else {
             self.symbol_table.insert(sym.to_string());
             self.write_tag(Tag::Symbol);
             self.write_bytes_len(sym.as_bytes());

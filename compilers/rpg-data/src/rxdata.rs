@@ -1,4 +1,5 @@
-use rpg_types::{from_bytes, to_bytes, Result, RpgError, RpgValue};
+use crate::marshal::{from_bytes, to_bytes};
+use rpg_types::{Result, RpgError, RpgValue};
 use std::io::{Read, Write};
 
 /// 读取 rxdata 文件并返回解析后的 RpgValue
