@@ -96,6 +96,23 @@ impl<'a> Decoder<'a> {
                 let i = self.read_packed_int()?;
                 Ok(RubyValue::Integer(i))
             }
+            Tag::Bignum => {
+                let sign = self.read_byte()?;
+                let len = self.read_usize()?;
+                let mut result: i64 = 0;
+                for i in 0..len {
+                    let byte = self.read_byte()? as u64;
+                    result |= (byte as i64) << (8 * i);
+                }
+                if sign == b'-' {
+                    result = -result;
+                }
+                if result >= i32::MIN as i64 && result <= i32::MAX as i64 {
+                    Ok(RubyValue::Integer(result as i32))
+                } else {
+                    Ok(RubyValue::Integer(result as i32))
+                }
+            }
             Tag::Float => {
                 let f = self.read_float()?;
                 Ok(RubyValue::Float(f))
