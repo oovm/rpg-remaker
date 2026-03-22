@@ -1,9 +1,9 @@
-/// Marshal 标签定义
-mod tag;
 /// Marshal 解码器
 mod decode;
 /// Marshal 编码器
 mod encode;
+/// Marshal 标签定义
+mod tag;
 
-pub use decode::{from_bytes, DecodeError};
-pub use encode::{to_bytes, EncodeError};
+pub use decode::{DecodeError, from_bytes};
+pub use encode::{EncodeError, to_bytes};
