@@ -6,40 +6,17 @@ authors.workspace = true
 license.workspace = true
 description = "RGSS backend for rpg-hacker"
 
-# Default to building only the binary
 [[bin]]
 name = "rpg-hacker-rgss"
 path = "src/main.rs"
 
-# Temporarily disable library target to avoid sdl2 dependencies
-#[lib]
-#name = "rgss"
-#path = "src/lib.rs"
-
 [dependencies]
-# rpg-hacker-types = { path = "../rpg-types" }
-# rpg-hacker-rpg-config = { path = "../rpg-config" }
 serde.workspace = true
 serde_json.workspace = true
-thiserror.workspace = true
 rand.workspace = true
-
-# Bevy game engine - conditional features based on target
 bevy.workspace = true
-
-[target.'cfg(target_arch = "wasm32")'.dependencies.bevy]
-workspace = true
-default-features = false
-features = ["webgl2"]
-
-# Image processing (keep for bitmap operations)
 image.workspace = true
 bytemuck.workspace = true
-
-# Ruby integration (mruby) - temporarily commented out for testing
-# mruby-sys = "0.3"
-
-# Utility dependencies
 anyhow.workspace = true
 log.workspace = true
 env_logger.workspace = true
