@@ -7,7 +7,6 @@ license.workspace = true
 
 [dependencies]
 alox-48.workspace = true
-thiserror = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
-rpg-types = { path = "../rpg-types" }
+serde.workspace = true
+serde_yaml.workspace = true
+rpg-types.workspace = true
