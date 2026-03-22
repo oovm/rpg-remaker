@@ -10,8 +10,7 @@ pub use actor::RpgActor;
 
 #[derive(Debug, Clone)]
 pub struct ActorTable {
-    pub _0: Option<i32>,
-    pub _1: Vec<Option<RpgActor>>,
+    pub actors: Vec<Option<RpgActor>>,
 }
 
 /// RPG Maker 游戏数据
@@ -37,7 +36,8 @@ impl RpgMakerData {
     /// 转换为 RubyValue
     pub fn to_ruby_value(&self) -> RubyValue {
         match self {
-            RpgMakerData::Actors(ActorTable { _0: actors }) => Self::actors_to_ruby_value(actors),
+            RpgMakerData::Actors(actors) => Self::actors_to_ruby_value(&actors.actors),
+            RpgMakerData::Custom(value) => *value.clone(),
         }
     }
 
@@ -54,7 +54,7 @@ impl RpgMakerData {
                     }
                 }
             }
-            Ok(RpgMakerData::Actors(ActorTable { _0: actors }))
+            Ok(RpgMakerData::Actors(Box::new(ActorTable { actors })))
         }
         else {
             Err(crate::errors::RpgError::decode("RpgMakerData", "expected Array for Actors data"))

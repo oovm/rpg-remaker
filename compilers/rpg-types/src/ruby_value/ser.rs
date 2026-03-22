@@ -1,4 +1,5 @@
 use serde::ser::{Serialize, SerializeMap, SerializeSeq, Serializer};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 
 use super::{RpgFields, RpgHashKey, RubyValue};
 

@@ -90,7 +90,10 @@ impl<'a> Decoder<'a> {
         }
 
         // 如果不是标签，检查是否是直接编码的整数
-        if b >= 0x05 && b <= 0x7F {
+        if b == 0x00 {
+            // 直接编码的整数 0
+            return Ok(RubyValue::Integer(0));
+        } else if b >= 0x05 && b <= 0x7F {
             // 正整数: value = b - 5
             let value = (b - 5) as i32;
             return Ok(RubyValue::Integer(value));
