@@ -1,13 +1,13 @@
 [package]
 name = "graph-editor"
-version = "0.0.0"
-authors = ["Aster <192607617@qq.com>"]
+version.workspace = true
+authors.workspace = true
 description = "Draw graph online"
 repository = "https://github.com/oovm/graph-editor"
 documentation = "https://docs.rs/graph-editor"
-readme = "Readme.md"
-license = "MPL-2.0"
-edition = "2021"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
 exclude = ["package.json", "tests/**"]
 
 [dependencies]

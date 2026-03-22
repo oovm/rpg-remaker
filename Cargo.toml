@@ -1,11 +1,24 @@
 [workspace]
-members = ["projects/*"]
+members = ["compilers/*"]
 default-members = [
-    "projects/graph-editor",
+    "compilers/*",
 ]
 exclude = [
-    "projects/.DS_Store",
+    "compilers/.DS_Store",
 ]
+
+
+[workspace.package]
+edition = "2024"
+version = "0.0.0"
+authors = []
+license = "AGPL3.0"
+
+
+[workspace.dependencies]
+alox-48 = "0.6.0"
+clap = { version = "*", features = ["derive"] }
+rpg-data = { path = "compilers/rpg-data", version = "0.0.0" }
 
 [profile.release]
 lto = true

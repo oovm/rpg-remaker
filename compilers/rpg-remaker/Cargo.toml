@@ -1,0 +1,17 @@
+[package]
+name = "rpg-remaker"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "rpg"
+path = "bin/rpg.rs"
+
+[dependencies]
+clap.workspace = true
+rpg-data.workspace = true
+alox-48.workspace = true
