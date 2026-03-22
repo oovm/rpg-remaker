@@ -48,21 +48,12 @@ fn decode_path(path: &str) {
 /// 处理单个文件
 fn process_file(path: &Path) {
     let extension = path.extension().and_then(|ext| ext.to_str());
-
     let result = match extension {
-        Some("rvdata2") => {
-            println!("处理 rvdata2 文件: {}", path.display());
-            read_rvdata2(path.to_str().unwrap()).map(|_| format!("成功解码 {}", path.display()))
-        }
-        Some("rxdata") => {
-            println!("处理 rxdata 文件: {}", path.display());
-            read_rxdata(path.to_str().unwrap()).map(|_| format!("成功解码 {}", path.display()))
-        }
+        Some("rvdata2") => read_rvdata2(path.to_str().unwrap()),
+        Some("rxdata") => read_rxdata(path.to_str().unwrap()),
         _ => return,
     };
-
-    match result {
-        Ok(msg) => println!("{}", msg),
-        Err(e) => eprintln!("解码 {} 失败: {}", path.display(), e),
+    if let Err(e) = result {
+        eprintln!("解码 {} 失败: {}", path.display(), e);
     }
 }

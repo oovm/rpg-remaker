@@ -261,7 +261,14 @@ impl<'a> Decoder<'a> {
 
     fn read_tag(&mut self) -> Result<Tag, DecodeError> {
         let b = self.read_byte()?;
-        Tag::from_u8(b).ok_or_else(|| DecodeError { kind: DecodeErrorKind::InvalidTag(b), position: Some(self.position - 1) })
+        let tag = Tag::from_u8(b);
+        if tag.is_none() {
+            eprintln!("[DEBUG] Invalid tag 0x{:02X} at position {}, context: {:02X?}", 
+                b, self.position - 1, 
+                &self.input[self.position.saturating_sub(10)..self.position.min(self.input.len())]
+            );
+        }
+        tag.ok_or_else(|| DecodeError { kind: DecodeErrorKind::InvalidTag(b), position: Some(self.position - 1) })
     }
 
     fn read_packed_int(&mut self) -> Result<i32, DecodeError> {
@@ -350,7 +357,13 @@ impl<'a> Decoder<'a> {
                     position: Some(self.position),
                 })
             }
-            _ => Err(DecodeError { kind: DecodeErrorKind::InvalidTag(tag as u8), position: Some(self.position - 1) }),
+            _ => Err(DecodeError { 
+                kind: DecodeErrorKind::Other(format!(
+                    "expected symbol or symlink, got {:?} (0x{:02X}) at position {}", 
+                    tag, tag as u8, self.position - 1
+                )), 
+                position: Some(self.position - 1) 
+            }),
         }
     }
 }

@@ -13,3 +13,4 @@ path = "bin/rpg.rs"
 clap.workspace = true
 rpg-data.workspace = true
 walkdir.workspace = true
+rpg-types = { workspace = true }

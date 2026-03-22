@@ -2,9 +2,9 @@ use crate::marshal::{from_bytes, to_bytes};
 use rpg_types::{Result, RpgError, RubyValue};
 use std::io::{Read, Write};
 
-/// 读取 rxdata 文件并返回解析后的 RpgValue
+/// 读取 rxdata 文件并返回解析后的成功消息
 /// 同时生成同名的 yaml 文件
-pub fn read_rxdata(file_path: &str) -> Result<RubyValue> {
+pub fn read_rxdata(file_path: &str) -> Result<String> {
     let mut file = std::fs::File::open(file_path)?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
@@ -14,7 +14,7 @@ pub fn read_rxdata(file_path: &str) -> Result<RubyValue> {
     let yaml_path = file_path.replace(".rxdata", ".yaml");
     write_yaml(&yaml_path, &value)?;
 
-    Ok(value)
+    Ok(format!("成功解码 {}", file_path))
 }
 
 /// 写入 rxdata 文件
