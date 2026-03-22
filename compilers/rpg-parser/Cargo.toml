@@ -1,0 +1,10 @@
+[package]
+name = "rpg-parser"
+version = "0.1.0"
+edition = "2021"
+description = "RPG Maker 特殊代码解析器"
+
+[lib]
+path = "src/lib.rs"
+
+dependencies = []
