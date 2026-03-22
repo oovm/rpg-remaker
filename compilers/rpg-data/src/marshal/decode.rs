@@ -78,7 +78,24 @@ impl<'a> Decoder<'a> {
 
     /// 解码为 RpgValue
     pub fn decode(&mut self) -> Result<RubyValue, DecodeError> {
-        let tag = self.read_tag()?;
+        let b = self.read_byte()?;
+        
+        // 检查是否是直接编码的整数（-123 到 122）
+        if b >= 0x05 && b <= 0x7F {
+            // 正整数: value = b - 5
+            let value = (b - 5) as i32;
+            return Ok(RubyValue::Integer(value));
+        } else if b >= 0x80 && b <= 0xFB {
+            // 负整数: value = b - 256 - 5
+            let value = (b as i8 - 5) as i32;
+            return Ok(RubyValue::Integer(value));
+        }
+        
+        // 否则，将其作为标签处理
+        let tag = Tag::from_u8(b).ok_or_else(|| DecodeError { 
+            kind: DecodeErrorKind::InvalidTag(b), 
+            position: Some(self.position - 1) 
+        })?;
 
         if tag.is_object_link_referenceable() {
             self.object_table.push(self.position);
