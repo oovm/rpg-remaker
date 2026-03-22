@@ -48,8 +48,8 @@ impl Serialize for RubyValue {
                 let mut map = serializer.serialize_map(Some(3))?;
                 map.serialize_entry("__userdata__", &true)?;
                 map.serialize_entry("class", class)?;
-                let lossy = String::from_utf8_lossy(data);
-                map.serialize_entry("data", &lossy.as_ref())?;
+                let base64_data = base64::engine::general_purpose::STANDARD.encode(data);
+                map.serialize_entry("data", &base64_data)?;
                 map.end()
             }
             RubyValue::Instance { value, fields } => {

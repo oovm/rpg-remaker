@@ -3,10 +3,16 @@
 //! 提供 RPG Maker XP/VX/VX Ace/MV/MZ 游戏中常见的数据类型定义，
 //! 以及这些类型与 RubyValue 之间的转换功能。
 
-use crate::{Result, ruby_value::RubyValue};
+use crate::{ruby_value::RubyValue, Result};
 
 mod actor;
 pub use actor::RpgActor;
+
+#[derive(Debug, Clone)]
+pub struct ActorTable {
+    pub _0: Option<i32>,
+    pub _1: Vec<Option<RpgActor>>,
+}
 
 /// RPG Maker 游戏数据
 ///
@@ -14,8 +20,9 @@ pub use actor::RpgActor;
 #[derive(Debug, Clone)]
 pub enum RpgMakerData {
     /// 角色数据数组
-    Actors(Vec<Option<RpgActor>>),
-    // TODO: 添加其他类型
+    Actors(Box<ActorTable>),
+    /// 类型未知的一般表
+    Custom(Box<RubyValue>),
 }
 
 impl RpgMakerData {
@@ -30,7 +37,7 @@ impl RpgMakerData {
     /// 转换为 RubyValue
     pub fn to_ruby_value(&self) -> RubyValue {
         match self {
-            RpgMakerData::Actors(actors) => Self::actors_to_ruby_value(actors),
+            RpgMakerData::Actors(ActorTable { _0: actors }) => Self::actors_to_ruby_value(actors),
         }
     }
 
@@ -47,7 +54,7 @@ impl RpgMakerData {
                     }
                 }
             }
-            Ok(RpgMakerData::Actors(actors))
+            Ok(RpgMakerData::Actors(ActorTable { _0: actors }))
         }
         else {
             Err(crate::errors::RpgError::decode("RpgMakerData", "expected Array for Actors data"))
