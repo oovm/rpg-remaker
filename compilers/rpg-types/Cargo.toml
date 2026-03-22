@@ -1,21 +1,10 @@
 [package]
-name = "graph-editor"
+name = "rpg-types"
 version.workspace = true
 authors.workspace = true
-description = "Draw graph online"
-repository = "https://github.com/oovm/graph-editor"
-documentation = "https://docs.rs/graph-editor"
-readme = "readme.md"
+description = "RPG Maker type definitions"
 license.workspace = true
 edition.workspace = true
-exclude = ["package.json", "tests/**"]
 
 [dependencies]
-
-[dev-dependencies]
-
-[features]
-default = []
-
-[package.metadata.docs.rs]
-all-features = true
+thiserror = "1.0"
