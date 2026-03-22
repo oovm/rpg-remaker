@@ -5,8 +5,6 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [[bin]]
 name = "rpg"
 path = "bin/rpg.rs"
@@ -15,3 +13,4 @@ path = "bin/rpg.rs"
 clap.workspace = true
 rpg-data.workspace = true
 alox-48.workspace = true
+walkdir = "2"

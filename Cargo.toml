@@ -1,4 +1,5 @@
 [workspace]
+resolver = "3"
 members = ["compilers/*"]
 default-members = [
     "compilers/*",
@@ -12,7 +13,7 @@ exclude = [
 edition = "2024"
 version = "0.0.0"
 authors = []
-license = "AGPL3.0"
+license = "AGPL-3.0-only"
 
 
 [workspace.dependencies]

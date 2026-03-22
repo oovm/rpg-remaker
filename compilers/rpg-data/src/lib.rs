@@ -1,30 +1,7 @@
 #![warn(missing_docs)]
 
 use alox_48::Value;
-use serde::ser::{Serialize, Serializer, SerializeMap};
-
-/// 统一的 RPG 错误类型
-#[derive(Debug, thiserror::Error)]
-pub enum RpgError {
-    /// IO 错误
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-    /// 解码错误
-    #[error("Decode error: {0}")]
-    Decode(#[from] alox_48::DeError),
-    /// 编码错误
-    #[error("Encode error: {0}")]
-    Encode(#[from] alox_48::SerError),
-    /// YAML 错误
-    #[error("YAML error: {0}")]
-    Yaml(#[from] serde_yaml::Error),
-    /// 其他错误
-    #[error("Other error: {0}")]
-    Other(String),
-}
-
-/// 统一的结果类型
-pub type Result<T> = std::result::Result<T, RpgError>;
+use serde::ser::{Serialize, SerializeMap, Serializer};
 
 /// 可序列化的 Value 包装类型
 pub struct SerializableValue<'a>(pub &'a Value);
@@ -58,24 +35,14 @@ impl<'a> Serialize for SerializableValue<'a> {
             Value::Userdata(userdata) => {
                 serializer.serialize_str(&format!("<Userdata: {} data={:?}>", userdata.class, userdata.data))
             }
-            Value::Object(obj) => {
-                serializer.serialize_str(&format!("<Object: {}>", obj.class))
-            }
+            Value::Object(obj) => serializer.serialize_str(&format!("<Object: {}>", obj.class)),
             Value::Instance(inst) => {
                 serializer.serialize_str(&format!("<Instance: {:?} fields={:?}>", inst.value, inst.fields))
             }
-            Value::Regex { data, flags } => {
-                serializer.serialize_str(&format!("<Regex: /{}/{}/>", data, flags))
-            }
-            Value::RbStruct(st) => {
-                serializer.serialize_str(&format!("<Struct: {}>", st.class))
-            }
-            Value::Class(cls) => {
-                serializer.serialize_str(&format!("<Class: {}>", cls))
-            }
-            Value::Module(modu) => {
-                serializer.serialize_str(&format!("<Module: {}>", modu))
-            }
+            Value::Regex { data, flags } => serializer.serialize_str(&format!("<Regex: /{}/{}/>", data, flags)),
+            Value::RbStruct(st) => serializer.serialize_str(&format!("<Struct: {}>", st.class)),
+            Value::Class(cls) => serializer.serialize_str(&format!("<Class: {}>", cls)),
+            Value::Module(modu) => serializer.serialize_str(&format!("<Module: {}>", modu)),
             Value::Extended { module, value } => {
                 serializer.serialize_str(&format!("<Extended: module={:?} value={:?}>", module, value))
             }
@@ -85,9 +52,7 @@ impl<'a> Serialize for SerializableValue<'a> {
             Value::UserMarshal { class, value } => {
                 serializer.serialize_str(&format!("<UserMarshal: class={:?} value={:?}>", class, value))
             }
-            Value::Data { class, value } => {
-                serializer.serialize_str(&format!("<Data: class={:?} value={:?}>", class, value))
-            }
+            Value::Data { class, value } => serializer.serialize_str(&format!("<Data: class={:?} value={:?}>", class, value)),
         }
     }
 }
