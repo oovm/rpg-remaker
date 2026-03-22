@@ -1,10 +1,11 @@
 /// RPG Maker 翻译器
 /// 支持批量翻译、拆分合批翻译，以及特殊代码保护
 
+use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::Path;
 use std::time::Duration;
 
@@ -96,12 +97,62 @@ pub struct TranslationRequest {
 }
 
 /// 翻译结果
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TranslationResult {
     /// 原始文本
     pub original: String,
     /// 翻译后的文本
     pub translated: String,
+}
+
+/// 翻译补丁文件（JSON格式，键为原始文本，值为翻译文本）
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct TranslationPatch {
+    #[serde(flatten)]
+    translations: HashMap<String, String>,
+}
+
+impl TranslationPatch {
+    /// 从文件加载翻译补丁
+    pub fn from_file(path: &str) -> Result<Self> {
+        let path = Path::new(path);
+        let mut file = File::open(path)
+            .map_err(|e| TranslatorError::ParseError(format!("Failed to open patch file: {}", e)))?;
+        
+        let mut content = String::new();
+        file.read_to_string(&mut content)
+            .map_err(|e| TranslatorError::ParseError(format!("Failed to read patch file: {}", e)))?;
+        
+        let patch: TranslationPatch = serde_json::from_str(&content)
+            .map_err(|e| TranslatorError::ParseError(format!("Failed to parse patch file: {}", e)))?;
+        
+        Ok(patch)
+    }
+
+    /// 使用补丁翻译单个文本
+    pub fn translate(&self, text: &str) -> Option<&String> {
+        self.translations.get(text)
+    }
+
+    /// 使用补丁批量翻译文本
+    pub fn translate_batch(&self, texts: &[String]) -> Vec<Option<&String>> {
+        texts.iter().map(|text| self.translations.get(text)).collect()
+    }
+
+    /// 获取所有翻译条目数量
+    pub fn len(&self) -> usize {
+        self.translations.len()
+    }
+
+    /// 检查补丁是否为空
+    pub fn is_empty(&self) -> bool {
+        self.translations.is_empty()
+    }
+
+    /// 迭代所有翻译条目
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &String)> {
+        self.translations.iter()
+    }
 }
 
 /// 翻译器 trait
@@ -231,6 +282,7 @@ impl TranslatorFactory {
 pub struct TranslationManager {
     translator: Box<dyn Translator>,
     config: TranslatorConfig,
+    patch: Option<TranslationPatch>,
 }
 
 impl TranslationManager {
@@ -239,7 +291,63 @@ impl TranslationManager {
         Self {
             translator: TranslatorFactory::create(config.clone()),
             config,
+            patch: None,
         }
+    }
+
+    /// 加载翻译补丁文件
+    pub fn load_patch(&mut self, patch_path: &str) -> Result<()> {
+        let patch = TranslationPatch::from_file(patch_path)?;
+        self.patch = Some(patch);
+        Ok(())
+    }
+
+    /// 使用补丁翻译单个文本（如果补丁中存在，则使用补丁，否则使用 API 翻译）
+    pub async fn translate_with_patch(&self, text: &str) -> Result<String> {
+        if let Some(patch) = &self.patch {
+            if let Some(translated) = patch.translate(text) {
+                return Ok(translated.clone());
+            }
+        }
+        
+        self.translate_with_special_codes(text).await
+    }
+
+    /// 使用补丁批量翻译文本
+    pub async fn translate_batch_with_patch(&self, texts: &[String]) -> Result<Vec<String>> {
+        let mut results = Vec::with_capacity(texts.len());
+        let mut need_api_translate = Vec::new();
+        let mut need_api_indices = Vec::new();
+
+        if let Some(patch) = &self.patch {
+            for (i, text) in texts.iter().enumerate() {
+                if let Some(translated) = patch.translate(text) {
+                    results.push(translated.clone());
+                } else {
+                    results.push(String::new());
+                    need_api_translate.push(text.clone());
+                    need_api_indices.push(i);
+                }
+            }
+        } else {
+            need_api_translate = texts.to_vec();
+            need_api_indices = (0..texts.len()).collect();
+            results = vec![String::new(); texts.len()];
+        }
+
+        if !need_api_translate.is_empty() {
+            let api_results = self.translate_batch_with_special_codes(&need_api_translate).await?;
+            for (i, result) in api_results.into_iter().enumerate() {
+                results[need_api_indices[i]] = result;
+            }
+        }
+
+        Ok(results)
+    }
+
+    /// 获取已加载的补丁信息
+    pub fn patch_info(&self) -> Option<(usize, bool)> {
+        self.patch.as_ref().map(|p| (p.len(), p.is_empty()))
     }
     
     /// 翻译单个文本，处理特殊代码

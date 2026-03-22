@@ -7,4 +7,4 @@ description = "RPG Maker 特殊代码解析器"
 [lib]
 path = "src/lib.rs"
 
-dependencies = []
+[dependencies]

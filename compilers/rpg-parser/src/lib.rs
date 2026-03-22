@@ -16,7 +16,7 @@ pub struct ParseResult {
 /// 
 /// # 示例
 /// ```
-/// let text = "Hello \V[1], your name is \N[1]!";
+/// let text = r#"Hello \V[1], your name is \N[1]!"#;
 /// let result = rpg_parser::parse_special_codes(text);
 /// assert_eq!(result.original, text);
 /// assert_eq!(result.special_codes.len(), 2);
@@ -76,9 +76,9 @@ pub fn parse_special_codes(text: &str) -> ParseResult {
 /// # 示例
 /// ```
 /// let text = "Hello [SPECIAL_CODE_0], your name is [SPECIAL_CODE_1]!";
-/// let special_codes = vec![(7, "\\V[1]".to_string()), (25, "\\N[1]".to_string())];
+/// let special_codes = vec![(7, r"\V[1]".to_string()), (25, r"\N[1]".to_string())];
 /// let result = rpg_parser::restore_special_codes(text, &special_codes);
-/// assert_eq!(result, "Hello \\V[1], your name is \\N[1]!");
+/// assert_eq!(result, r#"Hello \V[1], your name is \N[1]!"#);
 /// ```
 pub fn restore_special_codes(text: &str, special_codes: &[(usize, String)]) -> String {
     let mut result = String::new();
@@ -115,7 +115,7 @@ pub fn restore_special_codes(text: &str, special_codes: &[(usize, String)]) -> S
 /// 
 /// # 示例
 /// ```
-/// let text1 = "Hello \V[1]";
+/// let text1 = r#"Hello \V[1]"#;
 /// let text2 = "Hello world";
 /// assert_eq!(rpg_parser::contains_special_codes(text1), true);
 /// assert_eq!(rpg_parser::contains_special_codes(text2), false);
@@ -127,7 +127,7 @@ pub fn contains_special_codes(text: &str) -> bool {
             if chars[i] == '\\' && i + 1 < chars.len() {
                 let code_char = chars[i + 1];
                 // 常见的 RPG Maker 特殊代码前缀
-                if "VNCWITFBSMP\".contains(code_char) {
+                if "VNCWITFBSMP".contains(code_char) {
                     return true;
                 }
             }
@@ -142,7 +142,7 @@ mod tests {
 
     #[test]
     fn test_parse_special_codes() {
-        let text = "Hello \\V[1], your name is \\N[1]!";
+        let text = r#"Hello \V[1], your name is \N[1]!"#;
         let result = parse_special_codes(text);
         assert_eq!(result.original, text);
         assert!(result.processed.contains("[SPECIAL_CODE_0]"));
@@ -153,14 +153,14 @@ mod tests {
     #[test]
     fn test_restore_special_codes() {
         let text = "Hello [SPECIAL_CODE_0], your name is [SPECIAL_CODE_1]!";
-        let special_codes = vec![(7, "\\V[1]".to_string()), (25, "\\N[1]".to_string())];
+        let special_codes = vec![(7, r"\V[1]".to_string()), (25, r"\N[1]".to_string())];
         let result = restore_special_codes(text, &special_codes);
-        assert_eq!(result, "Hello \\V[1], your name is \\N[1]!");
+        assert_eq!(result, r#"Hello \V[1], your name is \N[1]!"#);
     }
 
     #[test]
     fn test_contains_special_codes() {
-        let text1 = "Hello \\V[1]";
+        let text1 = r#"Hello \V[1]"#;
         let text2 = "Hello world";
         assert_eq!(contains_special_codes(text1), true);
         assert_eq!(contains_special_codes(text2), false);
@@ -168,7 +168,7 @@ mod tests {
 
     #[test]
     fn test_complex_special_codes() {
-        let text = "\\C[2]Hello\\C[0] \\V[1] \\N[1] \\I[1]";
+        let text = r#"\C[2]Hello\C[0] \V[1] \N[1] \I[1]"#;
         let result = parse_special_codes(text);
         assert_eq!(result.special_codes.len(), 4);
         let restored = restore_special_codes(&result.processed, &result.special_codes);

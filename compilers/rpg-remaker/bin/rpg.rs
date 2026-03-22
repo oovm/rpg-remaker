@@ -1,7 +1,8 @@
 use clap::Parser;
-use rpg_data::{read_rvdata2, read_rxdata, write_rvdata2, write_rxdata};
+use rpg_data::{read_rvdata2, read_rxdata, write_rvdata2};
+use rpg_translator::TranslationPatch;
 use rpg_types::{Result, RubyValue};
-use std::{fs::File, io::Read, path::Path};
+use std::{fs::File, io::Read, io::Write, path::Path};
 use walkdir::WalkDir;
 
 #[derive(Parser, Debug)]
@@ -23,6 +24,14 @@ enum Command {
         /// 文件或目录路径
         path: String,
     },
+    /// 使用翻译补丁翻译文件
+    Translate {
+        /// 文件或目录路径
+        path: String,
+        /// 翻译补丁文件路径（JSON 格式）
+        #[arg(long = "patch")]
+        patch: Option<String>,
+    },
 }
 
 fn main() {
@@ -34,6 +43,9 @@ fn main() {
         }
         Command::Encode { path } => {
             encode_path(&path);
+        }
+        Command::Translate { path, patch } => {
+            translate_path(&path, patch);
         }
     }
 }
@@ -114,4 +126,101 @@ fn read_yaml(file_path: &str) -> Result<RubyValue> {
     let mut content = String::new();
     file.read_to_string(&mut content)?;
     serde_yaml::from_str(&content).map_err(|e| rpg_types::RpgError::decode("yaml", &e.to_string()))
+}
+
+/// 翻译指定路径下的所有 YAML 文件
+fn translate_path(path: &str, patch_path: Option<String>) {
+    let path = Path::new(path);
+
+    if path.is_file() {
+        translate_file(path, patch_path.as_deref());
+        return;
+    }
+
+    for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
+        if entry.file_type().is_file() {
+            translate_file(entry.path(), patch_path.as_deref());
+        }
+    }
+}
+
+/// 翻译单个 YAML 文件
+fn translate_file(path: &Path, patch_path: Option<&str>) {
+    let extension = path.extension().and_then(|ext| ext.to_str());
+    if extension != Some("yaml") {
+        return;
+    }
+
+    println!("正在翻译: {}", path.display());
+
+    let result = read_yaml(path.to_str().unwrap()).and_then(|mut value| {
+        if let Some(patch_path) = patch_path {
+            let patch = TranslationPatch::from_file(patch_path)
+                .map_err(|e| rpg_types::RpgError::decode("patch", &format!("Failed to load patch: {}", e)))?;
+            
+            println!("使用补丁文件: {} ({} 条翻译)", patch_path, patch.len());
+            translate_ruby_value(&mut value, &patch);
+        }
+        Ok(value)
+    });
+
+    match result {
+        Ok(value) => {
+            let yaml_str = serde_yaml::to_string(&value)
+                .map_err(|e| rpg_types::RpgError::encode("yaml", &e.to_string()));
+            
+            if let Ok(yaml_str) = yaml_str {
+                let mut file = File::create(path)
+                    .map_err(|e| rpg_types::RpgError::encode("yaml", &format!("Failed to create file: {}", e)));
+                
+                if let Ok(mut file) = file {
+                    let _ = file.write_all(yaml_str.as_bytes());
+                    println!("成功翻译: {}", path.display());
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("翻译 {} 失败: {}", path.display(), e);
+        }
+    }
+}
+
+/// 递归翻译 RubyValue 中的字符串
+fn translate_ruby_value(value: &mut RubyValue, patch: &TranslationPatch) {
+    match value {
+        RubyValue::String(bytes) => {
+            if let Ok(text) = String::from_utf8(bytes.clone()) {
+                if let Some(translated) = patch.translate(&text) {
+                    *bytes = translated.as_bytes().to_vec();
+                }
+            }
+        }
+        RubyValue::Array(arr) => {
+            for item in arr.iter_mut() {
+                translate_ruby_value(item, patch);
+            }
+        }
+        RubyValue::Hash(hash) => {
+            for (_key, val) in hash.iter_mut() {
+                translate_ruby_value(val, patch);
+            }
+        }
+        RubyValue::Object { fields, .. } => {
+            for (_key, val) in fields.iter_mut() {
+                translate_ruby_value(val, patch);
+            }
+        }
+        RubyValue::Instance { value, fields } => {
+            translate_ruby_value(value, patch);
+            for (_key, val) in fields.iter_mut() {
+                translate_ruby_value(val, patch);
+            }
+        }
+        RubyValue::Struct { fields, .. } => {
+            for (_key, val) in fields.iter_mut() {
+                translate_ruby_value(val, patch);
+            }
+        }
+        _ => {}
+    }
 }

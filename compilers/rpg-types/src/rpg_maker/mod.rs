@@ -1,75 +1,43 @@
 //! RPG Maker 游戏数据类型
 //!
-//! 提供 RPG Maker XP/VX/VX Ace/MV/MZ 游戏中常见的数据类型定义，
-//! 以及这些类型与 RubyValue 之间的转换功能。
-
-use crate::{Result, ruby_value::RubyValue};
+//! 提供 RPG Maker XP/VX/VX Ace/MV/MZ 游戏中常见的数据类型定义。
+//! 这些类型使用 serde 进行序列化/反序列化，支持 YAML 和 JSON 格式。
 
 mod actor;
+mod animation;
+mod armor;
+mod class_;
+mod enemy;
+mod event;
+mod item;
+mod map;
+mod mapinfo;
+mod script;
+mod shared;
+mod skill;
+mod state;
+mod system;
+mod tileset;
+mod troop;
+mod weapon;
+
 pub use actor::RpgActor;
-
-#[derive(Debug, Clone)]
-pub struct ActorTable {
-    pub actors: Vec<Option<RpgActor>>,
-}
-
-/// RPG Maker 游戏数据
-///
-/// 表示 RPG Maker 游戏中的各种数据类型，如 Actors、Items、Maps 等。
-#[derive(Debug, Clone)]
-pub enum RpgMakerData {
-    /// 角色数据数组
-    Actors(Box<ActorTable>),
-    /// 类型未知的一般表
-    Custom(Box<RubyValue>),
-}
-
-impl RpgMakerData {
-    /// 从 RubyValue 创建 RpgMakerData
-    pub fn from_ruby_value(value: &RubyValue, data_type: &str) -> Result<Self> {
-        match data_type {
-            "Actors" => Self::actors_from_ruby_value(value),
-            _ => Err(crate::errors::RpgError::decode("RpgMakerData", &format!("unsupported data type: {}", data_type))),
-        }
-    }
-
-    /// 转换为 RubyValue
-    pub fn to_ruby_value(&self) -> RubyValue {
-        match self {
-            RpgMakerData::Actors(actors) => Self::actors_to_ruby_value(&actors.actors),
-            RpgMakerData::Custom(value) => *value.clone(),
-        }
-    }
-
-    /// 从 RubyValue 创建 Actors 数据
-    fn actors_from_ruby_value(value: &RubyValue) -> Result<Self> {
-        if let RubyValue::Array(arr) = value {
-            let mut actors = Vec::with_capacity(arr.len());
-            for item in arr {
-                match item {
-                    RubyValue::Nil => actors.push(None),
-                    _ => {
-                        let actor = RpgActor::from_ruby_value(item)?;
-                        actors.push(Some(actor));
-                    }
-                }
-            }
-            Ok(RpgMakerData::Actors(Box::new(ActorTable { actors })))
-        }
-        else {
-            Err(crate::errors::RpgError::decode("RpgMakerData", "expected Array for Actors data"))
-        }
-    }
-
-    /// 将 Actors 数据转换为 RubyValue
-    fn actors_to_ruby_value(actors: &[Option<RpgActor>]) -> RubyValue {
-        let arr: Vec<RubyValue> = actors
-            .iter()
-            .map(|opt| match opt {
-                None => RubyValue::Nil,
-                Some(actor) => actor.to_ruby_value(),
-            })
-            .collect();
-        RubyValue::Array(arr)
-    }
-}
+pub use animation::{RpgAnimation, RpgAnimationFrame, RpgAnimationTiming, AnimationFlashScope, AnimationCondition};
+pub use armor::RpgArmor;
+pub use class_::{RpgClass, RpgLearning};
+pub use enemy::{RpgEnemy, RpgEnemyAction};
+pub use event::{RpgEvent, RpgEventPage, RpgEventCondition, RpgEventGraphic, RpgEventCommand, RpgCommonEvent, RpgMoveRoute, RpgMoveCommand};
+pub use item::RpgItem;
+pub use map::RpgMap;
+pub use mapinfo::RpgMapInfo;
+pub use script::RpgScript;
+pub use shared::{
+    AudioFile, Scope, Occasion, ParameterType, BlendMode, MoveType, MoveSpeed, MoveFrequency,
+    EventTrigger, Restriction, Position, ArmorKind, AnimationPosition, ActionKind, BasicAction,
+};
+pub use skill::RpgSkill;
+pub use state::RpgState;
+pub use system::{RpgSystem, RpgWords};
+pub use tileset::RpgTileset;
+pub use troop::{RpgTroop, RpgTroopMember, RpgTroopPage, RpgTroopPageCondition};
+pub use weapon::RpgWeapon;

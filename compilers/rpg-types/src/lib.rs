@@ -11,6 +11,6 @@ pub mod ruby_value;
 
 pub use crate::{
     errors::{Result, RpgError},
-    rpg_maker::{RpgActor, RpgMakerData},
+    rpg_maker::*,
     ruby_value::{RpgFields, RpgHash, RpgHashKey, RubyValue},
 };

@@ -7,11 +7,12 @@ description = "RPG Maker 翻译器，支持批量翻译和特殊代码保护"
 [lib]
 path = "src/lib.rs"
 
-dependencies =
-    async-trait = "0.1"
-    rpg-parser = { path = "../rpg-parser" }
-    serde = { version = "1.0", features = ["derive"] }
-    serde_yaml = "0.9"
+[dependencies]
+async-trait = "0.1"
+rpg-parser = { path = "../rpg-parser" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
 
 [dev-dependencies]
-    tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.0", features = ["full"] }
